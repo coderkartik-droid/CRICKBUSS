@@ -1,0 +1,50 @@
+=== USERS ===
+  U id=e5a13053-dd87-4bb2-b2cd-d4e22f8a4172 un='admin' email='admin@crickscore.local' active=True SU STAFF role:admin
+  U id=fe031ce3-0626-4cd5-878a-e41348cff6a8 un=None email='kartik@gmail.com' active=True SU STAFF role:super_admin
+  U id=3342ec73-ab16-4d4d-b75a-a11c7164922e un='KARTIK123' email='scorer@gmail.com' active=True role:scorer
+  U id=46b54268-7f7c-4a58-a9c9-b448ff93542a un='KARTIK' email='ndaanspirant@gmail.com' active=True role:admin
+  U id=b38f2fc8-bcc3-4b7a-a4e7-76a0a9a42d7d un='official_scorer' email='scorer@crickscore.local' active=True role:scorer
+  U id=fd2f5478-7aaa-4ba1-97ab-e789bdbe9bf1 un='KARTIK12' email='chaudharysavita588@gmail.com' active=True role:user
+=== MODEL COUNTS ===
+django.contrib.admin.models|LogEntry|django_admin_log|4
+django.contrib.auth.models|Permission|auth_permission|172
+django.contrib.auth.models|Group|auth_group|0
+django.contrib.contenttypes.models|ContentType|django_content_type|43
+django.contrib.sessions.models|Session|django_session|37
+rest_framework_simplejwt.token_blacklist.models|OutstandingToken|token_blacklist_outstandingtoken|0
+rest_framework_simplejwt.token_blacklist.models|BlacklistedToken|token_blacklist_blacklistedtoken|0
+apps.accounts.models|CustomUser|accounts_customuser|6
+apps.accounts.models|LoginHistory|accounts_loginhistory|35
+apps.matches.models|Venue|matches_venue|1
+apps.matches.models|Ground|matches_ground|1
+apps.matches.models|Tournament|matches_tournament|0
+apps.matches.models|Official|matches_official|4
+apps.matches.models|Sponsor|matches_sponsor|1
+apps.matches.models|Match|matches_match|2
+apps.matches.models|Innings|matches_innings|3
+apps.matches.models|PlayerMatchInnings|matches_playermatchinnings|26
+apps.matches.models|BowlerMatchInnings|matches_bowlermatchinnings|10
+apps.matches.models|BallByBall|matches_ballbyball|25
+apps.matches.models|Partnership|matches_partnership|1
+apps.matches.models|FallOfWicket|matches_fallofwicket|2
+apps.teams.models|Team|teams_team|2
+apps.players.models|Player|players_player|22
+apps.players.models|BattingStat|players_battingstat|22
+apps.players.models|BowlingStat|players_bowlingstat|20
+apps.series.models|Series|series_series|1
+apps.series.models|PointsTableEntry|series_pointstableentry|2
+apps.rankings.models|RankingEntry|rankings_rankingentry|3
+apps.news.models|NewsCategory|news_newscategory|1
+apps.news.models|NewsArticle|news_newsarticle|1
+apps.news.models|ArticleComment|news_articlecomment|0
+apps.news.models|ArticleLike|news_articlelike|0
+apps.news.models|ArticleBookmark|news_articlebookmark|0
+apps.videos.models|VideoCategory|videos_videocategory|1
+apps.videos.models|CricketVideo|videos_cricketvideo|1
+apps.videos.models|VideoLike|videos_videolike|0
+apps.videos.models|VideoBookmark|videos_videobookmark|0
+apps.photos.models|PhotoAlbum|photos_photoalbum|1
+apps.photos.models|PhotoItem|photos_photoitem|1
+apps.dashboard.models|SavedMatch|dashboard_savedmatch|0
+apps.dashboard.models|NotificationPreference|dashboard_notificationpreference|6
+apps.dashboard.models|SiteSetting|dashboard_sitesetting|1

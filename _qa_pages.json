@@ -1,0 +1,49 @@
+{
+  "slug": "rw-vs-tk-match-2-t20",
+  "series_slug": "thunder-warrior-cup-2026",
+  "team1_slug": "royal-warriors",
+  "team2_slug": "thunder-kings",
+  "player_slug": "aarav-patel",
+  "news_slug": "royal-warriors-win-toss-elect-to-bat-first",
+  "video_slug": "twc-2026-match-1-highlights",
+  "album_slug": "twc-2026-match-day",
+  "anon_failures": [],
+  "auth_failures": [
+    [
+      "Dashboard local venue",
+      "/dashboard/local/venue/",
+      200,
+      403
+    ],
+    [
+      "Dashboard local series",
+      "/dashboard/local/series/",
+      200,
+      403
+    ],
+    [
+      "Dashboard local news",
+      "/dashboard/local/news/",
+      200,
+      403
+    ],
+    [
+      "Dashboard managed users",
+      "/dashboard/managed/users/",
+      200,
+      404
+    ],
+    [
+      "Dashboard website settings",
+      "/dashboard/website/settings/",
+      200,
+      404
+    ],
+    [
+      "Scorer action",
+      "/matches/rw-vs-tk-match-2-t20/scorer/action/",
+      200,
+      400
+    ]
+  ]
+}

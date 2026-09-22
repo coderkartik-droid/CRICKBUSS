@@ -1,0 +1,111 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Cricket Videos, Match Highlights & Interviews - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3" style="border-bottom: 2px solid var(--border-light);">
+    <div>
+      <h2 class="fw-bold mb-1">Cricket Videos & Highlights</h2>
+      <p class="text-muted small mb-0">Watch ball-by-ball boundary packages, press conferences, and player interviews.</p>
+    </div>
+
+    <!-- Category filter & search -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <form method="GET" class="d-flex gap-2">
+        <select name="category" class="form-select" onchange="this.form.submit()">
+          <option value="">All Video Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat.slug }}" {% if active_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="input-group">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search videos...">
+          <button class="btn btn-emerald" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Featured Hero Video -->
+  {% if featured_video and not active_category and not search_query %}
+    <div class="content-card overflow-hidden mb-5">
+      <div class="row g-0">
+        <div class="col-lg-7">
+          <div class="card-thumb" style="padding-top: 56.25%;">
+            <img src="{{ featured_video.get_thumbnail_url }}" alt="{{ featured_video.title }}">
+            <a href="{{ featured_video.get_absolute_url }}" class="video-play-btn"><i class="fa-solid fa-play"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-5 p-4 d-flex flex-column justify-content-between" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--bg-dark) 100%); color: var(--pearl-white);">
+          <div>
+            <span class="badge-live-custom mb-2">FEATURED HIGHLIGHT</span>
+            <h4 class="fw-bold mb-2">{{ featured_video.title }}</h4>
+            <p class="small mb-3" style="color: color-mix(in srgb, var(--pearl-white) 80%, transparent);">{{ featured_video.description }}</p>
+          </div>
+          <div class="d-flex justify-content-between align-items-center small border-top pt-3" style="border-color: color-mix(in srgb, var(--pearl-white) 20%, transparent); color: color-mix(in srgb, var(--pearl-white) 80%, transparent);">
+            <span><i class="fa-regular fa-clock me-1"></i> {{ featured_video.duration }}</span>
+            <span><i class="fa-regular fa-eye me-1"></i> {{ featured_video.views_count }} views</span>
+            <a href="{{ featured_video.get_absolute_url }}" class="btn btn-sm btn-emerald">Watch Now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Videos Grid -->
+  <div class="row g-4">
+    {% for video in videos %}
+      <div class="col-lg-4 col-md-6">
+        <div class="content-card h-100">
+          <div class="card-thumb">
+            <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}">
+            <a href="{{ video.get_absolute_url }}" class="video-play-btn"><i class="fa-solid fa-play"></i></a>
+            <span class="position-absolute bottom-0 end-0 bg-dark text-white px-2 py-1 m-2 rounded small fw-bold font-monospace" style="font-size: 0.75rem;">
+              {{ video.duration }}
+            </span>
+          </div>
+          <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
+            <div>
+              <span class="badge bg-light text-dark border mb-2">{{ video.category.name }}</span>
+              <h6 class="fw-bold mb-2">
+                <a href="{{ video.get_absolute_url }}" class="text-reset text-decoration-none">{{ video.title }}</a>
+              </h6>
+              <p class="text-muted small mb-0">{{ video.description|truncatechars:100 }}</p>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small text-muted" style="border-color: var(--border-light);">
+              <span><i class="fa-regular fa-eye me-1"></i> {{ video.views_count }} views</span>
+              <span><i class="fa-regular fa-clock me-1"></i> {{ video.created_at|timesince }} ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 py-5">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa-solid fa-video"></i>
+          </div>
+          <h4>No videos found</h4>
+          <p>No videos found matching your filter.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-5 d-flex justify-content-center">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ active_category }}">&laquo; Previous</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ active_category }}">Next &raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}
+

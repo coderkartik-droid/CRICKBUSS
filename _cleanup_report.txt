@@ -1,0 +1,141 @@
+======================================================================
+DATABASE CLEANUP STARTED
+======================================================================
+KEEPING Superuser: id=e5a13053-dd87-4bb2-b2cd-d4e22f8a4172 username='admin' email='admin@crickscore.local'
+
+--- Pre-stage: clearing relationships ---
+--- Delete all non-keeper users & all user-linked rows ---
+  LoginHistory deleted: 35
+  SavedMatch deleted: 0
+  NotificationPreference deleted: 6
+  LogEntry deleted: 4
+  Sessions deleted: 37
+  ArticleComment deleted: 0
+  ArticleLike deleted: 0
+  ArticleBookmark deleted: 0
+  VideoLike deleted: 0
+  VideoBookmark deleted: 0
+  Users to delete: 5
+    DELETE user id=b38f2fc8-bcc3-4b7a-a4e7-76a0a9a42d7d username='official_scorer' email='scorer@crickscore.local'
+    DELETE user id=3342ec73-ab16-4d4d-b75a-a11c7164922e username='KARTIK123' email='scorer@gmail.com'
+    DELETE user id=fd2f5478-7aaa-4ba1-97ab-e789bdbe9bf1 username='KARTIK12' email='chaudharysavita588@gmail.com'
+    DELETE user id=fe031ce3-0626-4cd5-878a-e41348cff6a8 username=None email='kartik@gmail.com'
+    DELETE user id=46b54268-7f7c-4a58-a9c9-b448ff93542a username='KARTIK' email='ndaanspirant@gmail.com'
+  Remaining users: 1 (expected 1)
+
+--- Bulk-delete application data (FK checks OFF temporarily) ---
+  PRAGMA foreign_keys = OFF
+  DELETE matches.BallByBall [matches_ballbyball] => 25 rows
+  DELETE matches.FallOfWicket [matches_fallofwicket] => 2 rows
+  DELETE matches.Partnership [matches_partnership] => 1 rows
+  DELETE matches.PlayerMatchInnings [matches_playermatchinnings] => 26 rows
+  DELETE matches.BowlerMatchInnings [matches_bowlermatchinnings] => 10 rows
+  DELETE matches.Innings [matches_innings] => 3 rows
+  DELETE matches.Match [matches_match] => 2 rows
+  DELETE matches.Official [matches_official] => 4 rows
+  DELETE matches.Sponsor [matches_sponsor] => 1 rows
+  DELETE matches.Ground [matches_ground] => 1 rows
+  DELETE matches.Venue [matches_venue] => 1 rows
+  DELETE players.BattingStat [players_battingstat] => 22 rows
+  DELETE players.BowlingStat [players_bowlingstat] => 20 rows
+  DELETE players.Player [players_player] => 22 rows
+  DELETE teams.Team [teams_team] => 2 rows
+  DELETE series.PointsTableEntry [series_pointstableentry] => 2 rows
+  DELETE series.Series [series_series] => 1 rows
+  DELETE rankings.RankingEntry [rankings_rankingentry] => 3 rows
+  DELETE news.NewsArticle [news_newsarticle] => 1 rows
+  DELETE news.NewsCategory [news_newscategory] => 1 rows
+  DELETE videos.CricketVideo [videos_cricketvideo] => 1 rows
+  DELETE videos.VideoCategory [videos_videocategory] => 1 rows
+  DELETE photos.PhotoItem [photos_photoitem] => 1 rows
+  DELETE photos.PhotoAlbum [photos_photoalbum] => 1 rows
+  Reset all rows in sqlite_sequence (autoincrement reset)
+  PRAGMA foreign_keys = ON (re-enabled)
+
+--- Integrity checks ---
+  PRAGMA integrity_check : OK
+  PRAGMA foreign_key_check: FAIL -> [('players_player_teams', 56, 'teams_team', 0), ('players_player_teams', 56, 'players_player', 1), ('players_player_teams', 57, 'teams_team', 0), ('players_player_teams', 57, 'players_player', 1), ('players_player_teams', 58, 'teams_team', 0)]
+
+======================================================================
+VALIDATION COUNTS
+======================================================================
+Check                             Actual  Expected    Result
+--------------------------------------------------------------
+Users (total)                          1         1      PASS
+Users (superusers)                     1         1      PASS
+Users (staff)                          1         1      PASS
+Teams                                  0         0      PASS
+Players                                0         0      PASS
+Matches                                0         0      PASS
+Venues                                 0         0      PASS
+Grounds                                0         0      PASS
+Innings                                0         0      PASS
+Series                                 0         0      PASS
+Batting scorecards                     0         0      PASS
+Bowling scorecards                     0         0      PASS
+Ball events                            0         0      PASS
+News articles                          0         0      PASS
+Photo albums                           0         0      PASS
+Photo items                            0         0      PASS
+Videos                                 0         0      PASS
+Sponsors                               0         0      PASS
+LoginHistory                           0         0      PASS
+SavedMatch                             0         0      PASS
+NotificationPrefs                      0         0      PASS
+
+======================================================================
+FINAL VERIFICATION — REMAINING SUPERUSER
+======================================================================
+  User id        : e5a13053-dd87-4bb2-b2cd-d4e22f8a4172
+  username       : admin
+  email          : admin@crickscore.local
+  is_superuser   : True [requires True for Django Admin]
+  is_staff       : True [requires True for Django Admin]
+  is_active      : True
+  role           : admin
+  Django Admin login allowed   : True
+  Dashboard login (role+active): True
+
+======================================================================
+PER-MODEL DELETIONS SUMMARY
+======================================================================
+  * LoginHistory                                       35
+    SavedMatch                                          0
+  * NotificationPreference                              6
+  * LogEntry (admin logs)                               4
+  * Session (all)                                      37
+    ArticleComment                                      0
+    ArticleLike                                         0
+    ArticleBookmark                                     0
+    VideoLike                                           0
+    VideoBookmark                                       0
+  * Users (deleted)                                     5
+  * Users (kept)                                        1
+  * matches.BallByBall                                 25
+  * matches.FallOfWicket                                2
+  * matches.Partnership                                 1
+  * matches.PlayerMatchInnings                         26
+  * matches.BowlerMatchInnings                         10
+  * matches.Innings                                     3
+  * matches.Match                                       2
+  * matches.Official                                    4
+  * matches.Sponsor                                     1
+  * matches.Ground                                      1
+  * matches.Venue                                       1
+  * players.BattingStat                                22
+  * players.BowlingStat                                20
+  * players.Player                                     22
+  * teams.Team                                          2
+  * series.PointsTableEntry                             2
+  * series.Series                                       1
+  * rankings.RankingEntry                               3
+  * news.NewsArticle                                    1
+  * news.NewsCategory                                   1
+  * videos.CricketVideo                                 1
+  * videos.VideoCategory                                1
+  * photos.PhotoItem                                    1
+  * photos.PhotoAlbum                                   1
+
+  TOTAL records deleted (approx): 242
+
+CLEANUP COMPLETE

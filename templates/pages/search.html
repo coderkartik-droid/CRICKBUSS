@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results for "{{ query }}" - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="mb-4 pb-3" style="border-bottom: 2px solid var(--border-light);">
+    <h2 class="fw-bold mb-1">Search Results</h2>
+    <p class="text-muted small mb-0">Showing search matches for <strong style="color: var(--primary);">"{{ query }}"</strong></p>
+  </div>
+
+  <!-- Big Search Bar -->
+  <form action="{% url 'matches:global_search' %}" method="GET" class="mb-5">
+    <div class="input-group input-group-lg">
+      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search matches, players, teams, news, or videos..." required>
+      <button class="btn btn-emerald px-4" type="submit"><i class="fa-solid fa-magnifying-glass me-2"></i> Search</button>
+    </div>
+  </form>
+
+  {% if query %}
+    <!-- Matches Section -->
+    {% if matches %}
+      <div class="mb-5">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-baseball-bat-ball me-2" style="color: var(--primary);"></i> Matches</h5>
+        <div class="row g-3">
+          {% for m in matches %}
+            <div class="col-md-6">
+              <div class="match-card">
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                  <span>{{ m.match_type }}</span>
+                  <span class="badge {% if m.status == 'live' %}badge-live-custom{% else %}bg-secondary{% endif %}">{{ m.get_status_display }}</span>
+                </div>
+                <div class="fw-bold mb-1">{{ m.title }}</div>
+                <div class="small text-muted">{{ m.start_datetime|date:"d M Y" }} &bull; {{ m.venue.name|default:"TBD" }}</div>
+                <a href="{% url 'matches:match_detail' slug=m.slug %}" class="btn btn-sm btn-outline-emerald mt-2">View Match &rarr;</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Teams Section -->
+    {% if teams %}
+      <div class="mb-5">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-shield me-2" style="color: var(--secondary);"></i> Teams</h5>
+        <div class="row g-3">
+          {% for t in teams %}
+            <div class="col-md-4 col-sm-6">
+              <a href="{{ t.get_absolute_url }}" class="text-decoration-none text-reset">
+                <div class="content-card p-3 d-flex flex-row align-items-center gap-3">
+                  <img src="{{ t.get_logo_url }}" alt="" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover; border: 2px solid var(--primary-border);">
+                  <div>
+                    <h6 class="fw-bold mb-0">{{ t.name }}</h6>
+                    <small class="text-muted">{{ t.get_team_type_display }}</small>
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Players Section -->
+    {% if players %}
+      <div class="mb-5">
+        <h5 class="fw-bold mb-3"><i class="fa-solid fa-person-running me-2" style="color: var(--accent);"></i> Players</h5>
+        <div class="row g-3">
+          {% for p in players %}
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ p.get_absolute_url }}" class="text-decoration-none text-reset">
+                <div class="content-card p-3 text-center">
+                  <img src="{{ p.get_image_url }}" alt="" class="rounded-circle mx-auto mb-2" style="width: 60px; height: 60px; object-fit: cover; border: 2px solid var(--primary-border);">
+                  <h6 class="fw-bold mb-0 small">{{ p.name }}</h6>
+                  <span class="text-muted small" style="font-size: 0.75rem;">{{ p.get_role_display }}</span>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- News Stories -->
+    {% if news %}
+      <div class="mb-5">
+        <h5 class="fw-bold mb-3"><i class="fa-regular fa-newspaper me-2" style="color: var(--primary);"></i> News Articles</h5>
+        <div class="row g-3">
+          {% for a in news %}
+            <div class="col-md-6">
+              <div class="content-card p-3">
+                <h6 class="fw-bold mb-1">
+                  <a href="{{ a.get_absolute_url }}" class="text-reset text-decoration-none">{{ a.title }}</a>
+                </h6>
+                <p class="small text-muted mb-0">{{ a.excerpt|truncatechars:110 }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if not matches and not teams and not players and not news and not videos %}
+      <div class="py-5">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <h4>No results found</h4>
+          <p>No results found for "{{ query }}". Try checking your spelling or searching for a player, country, or league name.</p>
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="py-5">
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <h4>Search CRICKBUSS</h4>
+        <p>Type keywords in the search bar above to find matches, teams, players, news, or videos.</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

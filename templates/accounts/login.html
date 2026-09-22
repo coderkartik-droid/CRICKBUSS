@@ -1,0 +1,64 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Log In to Your Account - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5 auth-page">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="content-card p-4 p-sm-5">
+        <div class="text-center mb-4">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 64px; height: 64px; background: var(--primary-light);">
+            <i class="fa-solid fa-baseball-bat-ball fs-3 auth-icon"></i>
+          </div>
+          <h3 class="fw-bold mb-1">Welcome Back!</h3>
+          <p class="text-muted small">Sign in to track favorite teams, save match watchlists, and participate in discussions.</p>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger small py-2 mb-3">
+              {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email or Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <label class="form-label small fw-semibold">Password</label>
+            </div>
+            {{ form.password }}
+            {% if form.password.errors %}
+              <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-check mb-4">
+            {{ form.remember_me }}
+            <label class="form-check-label small text-muted" for="{{ form.remember_me.id_for_label }}">
+              Remember me on this browser
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-emerald w-100 py-2 fw-bold mb-3">
+            Sign In to CRICKBUSS
+          </button>
+
+          <div class="text-center small text-muted mt-4">
+            Don't have an account?             <a href="{% url 'accounts:register' %}" class="auth-accent-link fw-bold text-decoration-none">Register Now</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

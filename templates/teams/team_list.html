@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Local Cricket Teams - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1">Cricket Teams Directory</h2>
+      <p class="text-muted small mb-0">Browse local cricket teams and club squads.</p>
+    </div>
+
+    <!-- Category filter & search -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <form method="GET" class="d-flex gap-2">
+        <select name="category" class="form-select" onchange="this.form.submit()">
+          <option value="">All Categories</option>
+          {% for cat_val, cat_label in categories %}
+            <option value="{{ cat_val }}" {% if active_category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+          {% endfor %}
+        </select>
+        <div class="input-group">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search teams...">
+          <button class="btn btn-emerald" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {% for team in teams %}
+      <div class="col-lg-4 col-md-6">
+        <a href="{{ team.get_absolute_url }}" class="text-decoration-none text-reset">
+          <div class="team-card">
+            <div class="team-card-header">
+              <img src="{{ team.get_logo_url }}" alt="{{ team.name }}" class="team-card-logo">
+              <div>
+                <h5 class="team-card-name">{{ team.name }}</h5>
+                <span class="team-card-type">{{ team.get_team_type_display }}</span>
+              </div>
+            </div>
+            <div class="team-stats-grid">
+              <div class="team-stat-item">
+                <div class="team-stat-value">{{ team.total_matches }}</div>
+                <div class="team-stat-label">Matches</div>
+              </div>
+              <div class="team-stat-item">
+                <div class="team-stat-value" style="color: var(--primary);">{{ team.total_wins }}</div>
+                <div class="team-stat-label">Wins</div>
+              </div>
+              <div class="team-stat-item">
+                <div class="team-stat-value">{{ team.win_percentage }}%</div>
+                <div class="team-stat-label">Win %</div>
+              </div>
+            </div>
+            <div class="team-card-footer">
+              <span class="small text-muted"><i class="fa-solid fa-user-shield me-1"></i> {{ team.captain_name|default:"TBA" }}</span>
+              <span class="fw-semibold" style="color: var(--primary);">View Squad &rarr;</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-12 py-5">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa-solid fa-shield"></i>
+          </div>
+          <h4>No Teams Found</h4>
+          <p>No teams found matching your query. Try adjusting your search or filters.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-5 d-flex justify-content-center">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next &raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

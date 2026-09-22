@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Notification Settings - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-3 p-4">
+        <h4 class="fw-bold mb-1"><i class="fa-solid fa-bell text-emerald me-2"></i> Notification Preferences</h4>
+        <p class="text-muted small mb-4">Choose which cricket events trigger alerts on your browser or email inbox.</p>
+
+        <form method="POST">
+          {% csrf_token %}
+
+          <h6 class="fw-bold text-uppercase small text-muted border-bottom pb-2 mb-3">Email Alerts</h6>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="email_match_start" id="email_match_start" {% if pref.email_match_start %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="email_match_start">
+              Favorite Team Match Start
+              <small class="d-block text-muted fw-normal">Get notified 15 minutes before your preferred team begins a match.</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="email_match_result" id="email_match_result" {% if pref.email_match_result %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="email_match_result">
+              Final Match Scorecard Summary
+              <small class="d-block text-muted fw-normal">Receive an email recap when a match concludes.</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" name="email_breaking_news" id="email_breaking_news" {% if pref.email_breaking_news %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="email_breaking_news">
+              Breaking Cricket News Digest
+              <small class="d-block text-muted fw-normal">Local tournament news, match updates, and team announcements.</small>
+            </label>
+          </div>
+
+          <h6 class="fw-bold text-uppercase small text-muted border-bottom pb-2 mb-3">Browser & Live Sound Alerts</h6>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="browser_live_score" id="browser_live_score" {% if pref.browser_live_score %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="browser_live_score">
+              Real-time Browser Push Notifications
+              <small class="d-block text-muted fw-normal">Receive notifications when you have a match open in background tabs.</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="browser_wicket_alerts" id="browser_wicket_alerts" {% if pref.browser_wicket_alerts %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="browser_wicket_alerts">
+              Instant Wicket Fall Banner
+              <small class="d-block text-muted fw-normal">Show instant alert on browser when a wicket is taken.</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" name="sound_effects" id="sound_effects" {% if pref.sound_effects %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="sound_effects">
+              Audio Sound Effects
+              <small class="d-block text-muted fw-normal">Play chime sound when a boundary (4 or 6) or wicket is bowled.</small>
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-emerald px-4">Save Notification Settings</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

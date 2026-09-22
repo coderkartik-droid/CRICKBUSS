@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Editorial & Support - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <h2 class="fw-bold mb-2"><i class="fa-regular fa-envelope text-emerald me-2"></i> Contact Us</h2>
+        <p class="text-muted small mb-4">Have feedback, advertising inquiries, or editorial tips? Get in touch with our operations desk.</p>
+
+        <form method="POST" onsubmit="event.preventDefault(); showToast('Thank you! Your message has been sent to our desk.', 'success'); this.reset();">
+          {% csrf_token %}
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Your Name</label>
+              <input type="text" class="form-control" placeholder="Full name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Email Address</label>
+              <input type="email" class="form-control" placeholder="name@example.com" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Subject</label>
+            <select class="form-select">
+              <option>General Inquiries & Feedback</option>
+              <option>Advertising & Sponsorship</option>
+              <option>Editorial Tips & Corrections</option>
+              <option>Technical Issue / Bug Report</option>
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Message</label>
+            <textarea class="form-control" rows="5" placeholder="How can our team help you?" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-emerald px-4 fw-bold">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

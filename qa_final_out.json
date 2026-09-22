@@ -1,0 +1,119 @@
+{
+ "Home@320": [
+  "LOW-CONTRAST: View All → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Scorecard & Live → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Login@320": [
+  "OFFSCREEN: Manage Admins L278 R349 | Manage Scorers L278 R349 | Django Admin L278 R349",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Signup@320": [
+  "OFFSCREEN: Manage Admins L278 R349 | Manage Scorers L278 R349 | Django Admin L278 R349",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Dashboard@320": [
+  "OFFSCREEN: Manage Admins L278 R349 | Manage Scorers L278 R349 | Django Admin L278 R349",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Managed Users@320": [
+  "OFFSCREEN: Disable L431 R511 | Edit L515 R572 | Reset L503 R572 | Show password L532 R564 | Delete L498 R572",
+  "OVERLAP: Reset||?",
+  "LOW-CONTRAST: Edit bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Reset bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Delete bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Home@375": [
+  "LOW-CONTRAST: View All → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Scorecard & Live → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Login@375": [
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Signup@375": [
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Dashboard@375": [
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Managed Users@375": [
+  "OFFSCREEN: Disable L431 R511 | Edit L515 R572 | Reset L503 R572 | Show password L532 R564 | Delete L498 R572",
+  "OVERLAP: Reset||?",
+  "LOW-CONTRAST: Edit bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Reset bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Delete bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Home@390": [
+  "LOW-CONTRAST: View All → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Scorecard & Live → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Login@390": [
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Signup@390": [
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Dashboard@390": [
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Managed Users@390": [
+  "OFFSCREEN: Disable L431 R511 | Edit L515 R572 | Reset L503 R572 | Show password L532 R564 | Delete L498 R572",
+  "OVERLAP: Reset||?",
+  "LOW-CONTRAST: Edit bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Reset bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Delete bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Home@768": [
+  "LOW-CONTRAST: View All → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Scorecard & Live → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Login@768": [
+  "OFFSCREEN: Edit Profile L833 R967 | Notification Settings L975 R1164",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Signup@768": [
+  "OFFSCREEN: Edit Profile L833 R967 | Notification Settings L975 R1164",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Dashboard@768": [
+  "OFFSCREEN: Edit Profile L833 R967 | Notification Settings L975 R1164",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Managed Users@768": [
+  "OVERLAP: Reset||?",
+  "LOW-CONTRAST: Edit bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Reset bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Delete bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Home@1024": [
+  "LOW-CONTRAST: View All → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Scorecard & Live → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Login@1024": [
+  "OFFSCREEN: Edit Profile L1089 R1223 | Notification Settings L1231 R1420",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Signup@1024": [
+  "OFFSCREEN: Edit Profile L1089 R1223 | Notification Settings L1231 R1420",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Dashboard@1024": [
+  "OFFSCREEN: Edit Profile L1089 R1223 | Notification Settings L1231 R1420",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Managed Users@1024": [
+  "OVERLAP: Reset||?",
+  "LOW-CONTRAST: Edit bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Reset bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Delete bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Home@1366": [
+  "LOW-CONTRAST: View All → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Scorecard & Live → bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Login@1366": [
+  "OFFSCREEN: Edit Profile L1355 R1489 | Notification Settings L1497 R1686",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Signup@1366": [
+  "OFFSCREEN: Edit Profile L1355 R1489 | Notification Settings L1497 R1686",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Dashboard@1366": [
+  "OFFSCREEN: Edit Profile L1355 R1489 | Notification Settings L1497 R1686",
+  "LOW-CONTRAST: Manage Scorers bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Explore Matches bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Browse News bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "Managed Users@1366": [
+  "OVERLAP: Reset||?",
+  "LOW-CONTRAST: Edit bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Reset bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58) | Delete bgrgba(0, 0, 0, 0) fgrgb(11, 31, 58)"
+ ],
+ "_consoleErrors": [
+  "Failed to load resource: the server responded with a status of 405 (Method Not Allowed)"
+ ],
+ "_failedRequests": [
+  "405 http://127.0.0.1:8765/accounts/change-password/"
+ ]
+}

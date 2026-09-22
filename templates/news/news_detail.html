@@ -1,0 +1,130 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{{ article.title }} - CRICKBUSS News{% endblock %}
+{% block meta_description %}{{ article.excerpt }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Breadcrumb -->
+  <nav class="small text-muted mb-3" aria-label="breadcrumb">
+    <a href="{% url 'home' %}" class="text-reset text-decoration-none">Home</a> &bull;
+    <a href="{% url 'news:news_list' %}" class="text-reset text-decoration-none">News</a> &bull;
+    <span>{{ article.category.name }}</span>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Main Article Body (8 Cols) -->
+    <div class="col-lg-8">
+      <article class="content-card p-4 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge" style="background: var(--primary); color: var(--pearl-white);">{{ article.category.name }}</span>
+          {% if article.is_breaking %}
+            <span class="badge-live-custom">BREAKING</span>
+          {% endif %}
+          <span class="text-muted small ms-auto"><i class="fa-regular fa-clock me-1"></i> {{ article.published_at|date:"d M Y, H:i" }}</span>
+        </div>
+
+        <h2 class="fw-bold mb-3">{{ article.title }}</h2>
+
+        <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom small text-muted" style="border-color: var(--border-light);">
+          <div>
+            <span>By <strong>{{ article.author_name_fallback }}</strong></span>
+          </div>
+          <div class="d-flex gap-3">
+            <span><i class="fa-regular fa-eye me-1"></i> {{ article.views_count }} Views</span>
+            <button id="likeArticleBtn" data-slug="{{ article.slug }}" class="btn btn-sm btn-link text-decoration-none p-0 text-reset" title="Like Story">
+              <i class="{% if has_liked %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}"></i>
+              <span id="likesCountDisplay">{{ article.likes_count }}</span>
+            </button>
+            <button id="bookmarkNewsBtn" data-slug="{{ article.slug }}" class="btn btn-sm btn-link text-decoration-none p-0 text-reset" title="Bookmark Article">
+              <i class="{% if has_bookmarked %}fa-solid fa-bookmark{% else %}fa-regular fa-bookmark{% endif %}"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Featured Image -->
+        <div class="rounded-3 overflow-hidden mb-4" style="max-height: 440px;">
+          <img src="{{ article.get_image_url }}" alt="{{ article.title }}" class="w-100 h-100 object-fit-cover">
+        </div>
+
+        <!-- Excerpt Deck -->
+        <p class="lead fw-semibold mb-4 pb-3" style="border-bottom: 2px solid var(--border-light);">{{ article.excerpt }}</p>
+
+        <!-- Main Content -->
+        <div class="article-content fs-6 mb-4" style="line-height: 1.8; white-space: pre-line;">
+          {{ article.content }}
+        </div>
+      </article>
+
+      <!-- Comments Section -->
+      <section class="content-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="fa-regular fa-comments me-2" style="color: var(--primary);"></i> Discussion ({{ article.comments.count }})</h5>
+
+        <!-- Post Comment Form -->
+        {% if user.is_authenticated %}
+          <form action="{% url 'news:add_comment' slug=article.slug %}" method="POST" class="mb-4">
+            {% csrf_token %}
+            <div class="mb-2">
+              <textarea name="content" class="form-control" rows="3" placeholder="Join the discussion... Share your thoughts on this story." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-sm btn-emerald px-3">Post Comment</button>
+          </form>
+        {% else %}
+          <div class="alert alert-light border small text-center mb-4" style="background: var(--bg-subtle); border-color: var(--border-color);">
+            Please <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="fw-bold text-decoration-none" style="color: var(--primary);">Log In</a> or <a href="{% url 'accounts:register' %}" class="fw-bold text-decoration-none" style="color: var(--primary);">Register</a> to leave a comment.
+          </div>
+        {% endif %}
+
+        <!-- Comments List -->
+        <div class="comments-list">
+          {% for comment in comments %}
+            <div class="d-flex gap-3 py-3 border-bottom" style="border-color: var(--border-light);">
+              <img src="{{ comment.user.get_avatar_url }}" alt="" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="fw-bold small">{{ comment.user.get_full_name }}</span>
+                  <span class="text-muted small" style="font-size: 0.75rem;">{{ comment.created_at|timesince }} ago</span>
+                </div>
+                <p class="small mb-2">{{ comment.content }}</p>
+
+                <!-- Replies -->
+                {% for reply in comment.replies.all %}
+                  <div class="d-flex gap-2 mt-2 ps-3 border-start" style="border-color: var(--border-light);">
+                    <img src="{{ reply.user.get_avatar_url }}" alt="" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;">
+                    <div>
+                      <div class="fw-bold small">{{ reply.user.get_full_name }}</div>
+                      <p class="small mb-0">{{ reply.content }}</p>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% empty %}
+            <div class="text-muted small py-3 text-center">Be the first to share your thoughts on this story!</div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <!-- Sidebar: Related News (4 Cols) -->
+    <div class="col-lg-4">
+      <div class="content-card mb-4">
+        <div class="card-header-clean">
+          <span>Related Stories</span>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for rel in related_articles %}
+            <a href="{{ rel.get_absolute_url }}" class="list-group-item list-group-item-action py-3" style="border-color: var(--border-light);">
+              <h6 class="fw-bold mb-1 small">{{ rel.title }}</h6>
+              <div class="small text-muted"><i class="fa-regular fa-clock me-1"></i> {{ rel.published_at|date:"d M Y" }}</div>
+            </a>
+          {% empty %}
+            <div class="p-3 text-muted small">No related articles found.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,188 @@
+﻿<!-- Premium Live Scores Ticker -->
+{% if header_live_matches %}
+<div class="top-ticker-bar overflow-hidden d-none d-md-block">
+  <div class="container-fluid px-4 d-flex align-items-center">
+    <div class="d-flex align-items-center gap-3 me-4 fw-bold text-white text-uppercase tracking-wide" style="font-size: 0.75rem; letter-spacing: 0.1em;">
+      <span class="pulse-dot"></span> LIVE TICKER
+    </div>
+    <div class="d-flex overflow-x-auto text-nowrap py-2 no-scrollbar">
+      {% for lm in header_live_matches %}
+        <a href="{% url 'matches:match_detail' slug=lm.slug %}" class="ticker-item">
+          <span class="badge badge-live-custom me-2">{{ lm.match_type }}</span>
+          <span class="fw-semibold">{{ lm.team1.short_name }} vs {{ lm.team2.short_name }}</span>
+          {% if lm.current_innings %}
+            <span class="text-accent fw-bold ms-2">({{ lm.current_innings.runs }}/{{ lm.current_innings.wickets }} in {{ lm.current_innings.overs_formatted }} ov)</span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Premium Sticky Navbar -->
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top" id="mainNavbar">
+  <div class="container">
+    <!-- Premium Brand Logo -->
+    <a class="navbar-brand navbar-brand-custom" href="{% url 'home' %}">
+      <i class="fa-solid fa-baseball-bat-ball text-accent"></i>
+      <span>CRICK<span class="text-accent">BUSS</span></span>
+      <span class="brand-badge">LIVE</span>
+    </a>
+
+    <!-- Mobile Hamburger & Dark Mode Toggle -->
+    <div class="d-flex align-items-center gap-2 d-lg-none">
+      <button id="themeToggleBtnMobile" class="btn btn-sm border-0 p-2 d-flex align-items-center justify-content-center" type="button" aria-label="Toggle theme" style="width: 44px; height: 44px;">
+        <i class="fa-solid fa-moon fs-5"></i>
+      </button>
+      <button class="navbar-toggler border-0 shadow-none text-white p-2 d-flex align-items-center justify-content-center" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbarNav" aria-controls="mainNavbarNav" aria-expanded="false" aria-label="Toggle navigation" style="width: 44px; height: 44px;">
+        <i class="fa-solid fa-bars fs-4"></i>
+      </button>
+    </div>
+
+    <!-- Premium Collapsible Menu -->
+    <div class="collapse navbar-collapse" id="mainNavbarNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
+        <li class="nav-item">
+        <a class="nav-link nav-link-custom nav-home-link d-flex align-items-center gap-2" href="{% url 'home' %}">
+          <i class="fa-solid fa-house nav-item-icon" aria-hidden="true"></i>
+          <span>Home</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'matches:match_list' %}?status=live">
+            <i class="fa-solid fa-tower-broadcast nav-item-icon" aria-hidden="true"></i>
+            <span>Live Scores</span>
+            {% if header_live_count > 0 %}
+              <span class="badge badge-live-custom rounded-pill ms-1">{{ header_live_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'matches:match_list' %}">
+            <i class="fa-solid fa-baseball-bat-ball nav-item-icon" aria-hidden="true"></i>
+            <span>Matches</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'series:series_list' %}">
+            <i class="fa-solid fa-trophy nav-item-icon" aria-hidden="true"></i>
+            <span>Series</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'teams:team_list' %}">
+            <i class="fa-solid fa-users nav-item-icon" aria-hidden="true"></i>
+            <span>Teams</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'players:player_list' %}">
+            <i class="fa-solid fa-user nav-item-icon" aria-hidden="true"></i>
+            <span>Players</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'rankings:rankings_list' %}">
+            <i class="fa-solid fa-ranking-star nav-item-icon" aria-hidden="true"></i>
+            <span>Local Rankings</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'news:news_list' %}">
+            <i class="fa-solid fa-newspaper nav-item-icon" aria-hidden="true"></i>
+            <span>News</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'videos:video_list' %}">
+            <i class="fa-solid fa-play nav-item-icon" aria-hidden="true"></i>
+            <span>Videos</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'photos:album_list' %}">
+            <i class="fa-solid fa-camera nav-item-icon" aria-hidden="true"></i>
+            <span>Photos</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Right Side: Search, Theme Toggle, Auth -->
+      <div class="d-flex align-items-center mt-3 mt-lg-0 ms-lg-auto flex-shrink-0">
+        <!-- Premium Global Search Bar -->
+        <div class="position-relative flex-shrink-1" id="navSearchContainer" style="min-width:0;">
+          <form action="{% url 'matches:global_search' %}" method="GET" class="d-flex position-relative" role="search" id="navSearchForm">
+            <div class="search-icon-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <input id="navSearchInput" class="form-control" type="search" name="q" placeholder="Search teams, players..." aria-label="Search" autocomplete="off">
+          </form>
+          <!-- Premium Autocomplete Dropdown -->
+          <div id="navSearchDropdown" class="search-autocomplete-box p-3">
+            <div id="recentSearchesWrap" class="mb-3" style="display: none;">
+              <div class="search-section-header d-flex justify-content-between align-items-center">
+                <span>Recent Searches</span>
+                <button type="button" id="clearRecentSearchesBtn" class="btn btn-link p-0 text-decoration-none" style="font-size: 0.75rem;">Clear</button>
+              </div>
+              <div id="recentSearchesList" class="d-flex flex-wrap gap-2 mt-2"></div>
+            </div>
+            <div id="trendingSearchesWrap" class="mb-2">
+              <div class="search-section-header">Trending</div>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                <a href="/search/?q=India" class="trending-tag">India</a>
+                <a href="/search/?q=Australia" class="trending-tag">Australia</a>
+                <a href="/search/?q=Virat+Kohli" class="trending-tag">Virat Kohli</a>
+                <a href="/search/?q=Jasprit+Bumrah" class="trending-tag">Bumrah</a>
+                <a href="/search/?q=local+tournament" class="trending-tag">Local Tournament</a>
+              </div>
+            </div>
+            <div id="searchSuggestionsList" class="mt-2 pt-2 border-top" style="display: none;"></div>
+          </div>
+        </div>
+
+        <!-- Desktop Theme Toggle -->
+        <button id="themeToggleBtn" class="btn btn-sm border-0 text-white d-none d-lg-flex align-items-center justify-content-center flex-shrink-0" type="button" title="Toggle Theme" aria-label="Toggle theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <!-- Premium User Authentication Menu -->
+        {% if user.is_authenticated %}
+          <div class="dropdown flex-shrink-0">
+            <button class="btn btn-sm btn-outline-light rounded-pill dropdown-toggle d-flex align-items-center gap-2 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="{{ user.get_avatar_url }}" alt="Avatar" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover; border: 2px solid var(--border-color);">
+              <span class="d-none d-sm-inline fw-semibold">{{ user.get_short_name }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              {% if user.is_superuser or user.role == 'admin' %}
+                <li><a class="dropdown-item" href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-2" style="color: var(--primary);"></i> Admin Dashboard</a></li>
+              {% elif user.role == 'scorer' %}
+                <li><a class="dropdown-item" href="{% url 'dashboard:scorer' %}"><i class="fa-solid fa-tower-broadcast me-2" style="color: var(--danger);"></i> Scorer Panel</a></li>
+              {% endif %}
+              <li><a class="dropdown-item" href="{% url 'dashboard:saved_items' %}"><i class="fa-solid fa-bookmark me-2" style="color: var(--accent);"></i> Saved Watchlist</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fa-solid fa-user-gear me-2" style="color: var(--secondary);"></i> Account Profile</a></li>
+              <li><a class="dropdown-item" href="{% url 'dashboard:notifications' %}"><i class="fa-solid fa-bell me-2" style="color: var(--text-muted);"></i> Notifications</a></li>
+              {% if user.is_superuser %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="/admin/" target="_blank"><i class="fa-solid fa-shield-halved me-2"></i> Django Admin</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form action="{% url 'accounts:logout' %}" method="POST" class="d-inline w-100 logout-form">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger border-0 bg-transparent text-start w-100"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        {% else %}
+          <div class="d-flex align-items-center flex-shrink-0">
+            <a href="{% url 'accounts:login' %}" class="btn btn-sm btn-ghost rounded-pill px-4 text-nowrap">Log In</a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-sm btn-emerald rounded-pill px-4 text-nowrap">Register</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    </div>
+  </div>
+</nav>

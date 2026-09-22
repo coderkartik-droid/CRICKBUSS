@@ -1,0 +1,221 @@
+[data-bs-theme="dark"] {
+  --midnight-navy: #0B1F3A;
+  --champagne: #F7E7CE;
+  --dusty-rose: #D8A7B1;
+  --pearl-white: #F8F6F0;
+  --bg-main: var(--midnight-navy);
+  --bg-card: var(--midnight-navy);
+  --bg-subtle: color-mix(in srgb, var(--midnight-navy) 82%, var(--pearl-white));
+  --text-main: var(--pearl-white);
+  --text-muted: color-mix(in srgb, var(--pearl-white) 72%, transparent);
+  --text-soft: color-mix(in srgb, var(--pearl-white) 52%, transparent);
+  --border-color: color-mix(in srgb, var(--pearl-white) 25%, transparent);
+}
+[data-bs-theme="dark"] body { background: var(--midnight-navy); color: var(--pearl-white); }
+[data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3,
+[data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: var(--pearl-white); }
+[data-bs-theme="dark"] .navbar-custom, [data-bs-theme="dark"] .navbar-custom.scrolled { background: var(--midnight-navy) !important; }
+[data-bs-theme="dark"] .navbar-brand-custom, [data-bs-theme="dark"] .nav-link-custom { color: var(--pearl-white) !important; }
+[data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] .table-responsive, [data-bs-theme="dark"] .search-autocomplete-box,
+[data-bs-theme="dark"] .card, [data-bs-theme="dark"] .content-card,
+[data-bs-theme="dark"] .match-card, [data-bs-theme="dark"] .live-match-card,
+[data-bs-theme="dark"] .team-card, [data-bs-theme="dark"] .player-card {
+  background: var(--midnight-navy) !important;
+  border-color: var(--border-color) !important;
+  color: var(--pearl-white);
+}
+[data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { color: var(--pearl-white); }
+[data-bs-theme="dark"] .table { color: var(--pearl-white); }
+[data-bs-theme="dark"] .table thead th { background: var(--pearl-white); color: var(--midnight-navy); }
+[data-bs-theme="dark"] .table tbody td { border-color: var(--border-color); }
+[data-bs-theme="dark"] .dropdown-menu { background: var(--midnight-navy); border-color: var(--border-color); }
+[data-bs-theme="dark"] .dropdown-item { color: var(--pearl-white); }
+[data-bs-theme="dark"] .dropdown-item:hover { background: color-mix(in srgb, var(--dusty-rose) 20%, transparent); color: var(--pearl-white); }
+[data-bs-theme="dark"] .navbar-custom #themeToggleBtn i,
+[data-bs-theme="dark"] .navbar-custom #themeToggleBtnMobile i { color: var(--champagne) !important; }
+[data-bs-theme="dark"] .auth-page .content-card { color: var(--pearl-white); }
+[data-bs-theme="dark"] .auth-icon { color: var(--champagne); }
+[data-bs-theme="dark"] .auth-page .content-card h3,
+[data-bs-theme="dark"] .auth-page .content-card .form-label { color: var(--pearl-white) !important; }
+[data-bs-theme="dark"] .auth-page .content-card .text-muted,
+[data-bs-theme="dark"] .auth-page .content-card .form-text,
+[data-bs-theme="dark"] .auth-page .content-card .form-check-label {
+  color: color-mix(in srgb, var(--pearl-white) 82%, transparent) !important;
+}
+[data-bs-theme="dark"] .auth-page .content-card .form-control::placeholder {
+  color: var(--pearl-white);
+  opacity: .72;
+}
+[data-bs-theme="dark"] .auth-page .content-card .text-danger {
+  color: #f6a6b9 !important;
+}
+[data-bs-theme="dark"] .auth-page .content-card .alert {
+  color: var(--midnight-navy) !important;
+}
+
+/* ============================================================
+   DARK THEME CONTRAST PATCHES — visibility fixes, WCAG AA.
+   ============================================================ */
+[data-bs-theme="dark"] body { background: var(--midnight-navy); }
+[data-bs-theme="dark"] main {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--midnight-navy) 92%, transparent), var(--midnight-navy));
+}
+
+/* Cards / glass surfaces in dark mode: solid enough for AA text */
+[data-bs-theme="dark"] .card, [data-bs-theme="dark"] .content-card,
+[data-bs-theme="dark"] .match-card, [data-bs-theme="dark"] .live-match-card,
+[data-bs-theme="dark"] .team-card, [data-bs-theme="dark"] .player-card,
+[data-bs-theme="dark"] .bg-card-custom,
+[data-bs-theme="dark"] .form-section,
+[data-bs-theme="dark"] .newsletter-box {
+  background: color-mix(in srgb, var(--midnight-navy) 86%, var(--pearl-white)) !important;
+  color: var(--pearl-white);
+}
+
+/* Never a dark button on a dark surface */
+[data-bs-theme="dark"] .btn.bg-dark, [data-bs-theme="dark"] .btn.btn-dark,
+[data-bs-theme="dark"] .btn-dark {
+  background: color-mix(in srgb, var(--pearl-white) 14%, var(--midnight-navy)) !important;
+  border-color: color-mix(in srgb, var(--pearl-white) 40%, transparent) !important;
+  color: var(--pearl-white) !important;
+}
+[data-bs-theme="dark"] .btn.bg-dark:hover, [data-bs-theme="dark"] .btn-dark:hover {
+  background: var(--champagne) !important;
+  color: var(--midnight-navy) !important;
+}
+/* Gold / primary buttons stay high-contrast */
+[data-bs-theme="dark"] .btn-emerald, [data-bs-theme="dark"] .btn-primary,
+[data-bs-theme="dark"] .btn-success, [data-bs-theme="dark"] .btn-gold,
+[data-bs-theme="dark"] .btn-warning, [data-bs-theme="dark"] .btn-info {
+  background: var(--champagne) !important;
+  border-color: var(--champagne) !important;
+  color: var(--midnight-navy) !important;
+}
+[data-bs-theme="dark"] .btn-danger {
+  background: var(--dusty-rose) !important;
+  border-color: var(--dusty-rose) !important;
+  color: var(--midnight-navy) !important;
+}
+[data-bs-theme="dark"] .btn-outline-secondary, [data-bs-theme="dark"] .btn-ghost,
+[data-bs-theme="dark"] .btn-outline-primary, [data-bs-theme="dark"] .btn-outline-emerald {
+  border-color: color-mix(in srgb, var(--pearl-white) 45%, transparent) !important;
+  color: var(--pearl-white) !important;
+}
+[data-bs-theme="dark"] .btn-outline-secondary:hover, [data-bs-theme="dark"] .btn-ghost:hover,
+[data-bs-theme="dark"] .btn-outline-primary:hover, [data-bs-theme="dark"] .btn-outline-emerald:hover {
+  background: var(--champagne) !important;
+  border-color: var(--champagne) !important;
+  color: var(--midnight-navy) !important;
+}
+[data-bs-theme="dark"] .btn-link { color: var(--champagne) !important; }
+
+/* Form fields in dark mode: visible text, placeholders, focus */
+[data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select {
+  background: color-mix(in srgb, var(--pearl-white) 7%, var(--midnight-navy)) !important;
+  border-color: color-mix(in srgb, var(--pearl-white) 28%, transparent) !important;
+  color: var(--pearl-white) !important;
+}
+[data-bs-theme="dark"] .form-control::placeholder {
+  color: color-mix(in srgb, var(--pearl-white) 60%, transparent) !important;
+  opacity: 1 !important;
+}
+[data-bs-theme="dark"] .form-control:focus, [data-bs-theme="dark"] .form-select:focus {
+  border-color: var(--champagne) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--champagne) 18%, transparent) !important;
+}
+[data-bs-theme="dark"] .form-label, [data-bs-theme="dark"] label,
+[data-bs-theme="dark"] .form-check-label, [data-bs-theme="dark"] .form-text {
+  color: color-mix(in srgb, var(--pearl-white) 85%, transparent) !important;
+}
+[data-bs-theme="dark"] .input-group-text {
+  background: color-mix(in srgb, var(--pearl-white) 10%, var(--midnight-navy)) !important;
+  border-color: color-mix(in srgb, var(--pearl-white) 28%, transparent) !important;
+  color: var(--pearl-white) !important;
+}
+[data-bs-theme="dark"] .invalid-feedback, [data-bs-theme="dark"] .errorlist { color: #f6a6b9 !important; }
+
+/* Tables: readable, not blinding */
+[data-bs-theme="dark"] .table-responsive {
+  background: color-mix(in srgb, var(--pearl-white) 6%, var(--midnight-navy)) !important;
+}
+[data-bs-theme="dark"] .table thead th,
+[data-bs-theme="dark"] .sports-table thead th {
+  background: color-mix(in srgb, var(--pearl-white) 10%, var(--midnight-navy));
+  color: var(--champagne);
+}
+[data-bs-theme="dark"] .table, [data-bs-theme="dark"] .sports-table { color: var(--pearl-white); }
+
+/* Text utilities */
+[data-bs-theme="dark"] .text-dark, [data-bs-theme="dark"] .text-main,
+[data-bs-theme="dark"] .text-reset { color: var(--pearl-white) !important; }
+[data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-soft,
+[data-bs-theme="dark"] .text-secondary {
+  color: color-mix(in srgb, var(--pearl-white) 74%, transparent) !important;
+}
+[data-bs-theme="dark"] .text-danger { color: #f6a6b9 !important; }
+[data-bs-theme="dark"] .text-primary, [data-bs-theme="dark"] .text-warning,
+[data-bs-theme="dark"] .text-success, [data-bs-theme="dark"] .text-accent,
+[data-bs-theme="dark"] .text-emerald, [data-bs-theme="dark"] .text-info {
+  color: var(--champagne) !important;
+}
+
+/* Badges: no dark-on-dark / white-on-white */
+[data-bs-theme="dark"] .badge.bg-light, [data-bs-theme="dark"] .badge.bg-white {
+  background: color-mix(in srgb, var(--pearl-white) 14%, var(--midnight-navy)) !important;
+  border-color: color-mix(in srgb, var(--pearl-white) 30%, transparent) !important;
+  color: var(--pearl-white) !important;
+}
+[data-bs-theme="dark"] .badge.bg-dark { background: var(--pearl-white) !important; color: var(--midnight-navy) !important; }
+[data-bs-theme="dark"] .badge.bg-secondary { background: color-mix(in srgb, var(--pearl-white) 16%, var(--midnight-navy)) !important; color: var(--pearl-white) !important; }
+[data-bs-theme="dark"] .badge.bg-primary, [data-bs-theme="dark"] .badge.bg-success,
+[data-bs-theme="dark"] .badge.bg-warning, [data-bs-theme="dark"] .badge.bg-info {
+  background: var(--champagne) !important; color: var(--midnight-navy) !important;
+}
+[data-bs-theme="dark"] .badge.bg-danger { background: var(--dusty-rose) !important; color: var(--midnight-navy) !important; }
+
+/* Alerts */
+[data-bs-theme="dark"] .alert {
+  background: color-mix(in srgb, var(--dusty-rose) 22%, var(--midnight-navy)) !important;
+  border-color: var(--dusty-rose) !important;
+  color: var(--pearl-white) !important;
+}
+
+/* Nav, dropdown, search, misc surfaces */
+[data-bs-theme="dark"] .dropdown-menu { background: color-mix(in srgb, var(--midnight-navy) 96%, var(--pearl-white)); }
+[data-bs-theme="dark"] .search-autocomplete-box { background: color-mix(in srgb, var(--midnight-navy) 96%, var(--pearl-white)) !important; }
+[data-bs-theme="dark"] .trending-tag, [data-bs-theme="dark"] .search-suggestion-item { color: color-mix(in srgb, var(--pearl-white) 80%, transparent); }
+[data-bs-theme="dark"] .player-card-role, [data-bs-theme="dark"] .badge.bg-subtle {
+  background: color-mix(in srgb, var(--pearl-white) 12%, var(--midnight-navy)) !important;
+  color: var(--pearl-white) !important;
+  border-color: color-mix(in srgb, var(--pearl-white) 28%, transparent);
+}
+[data-bs-theme="dark"] .card-header-clean {
+  background: color-mix(in srgb, var(--pearl-white) 7%, var(--midnight-navy));
+  border-bottom-color: var(--border-color);
+}
+[data-bs-theme="dark"] .bg-subtle { background: color-mix(in srgb, var(--pearl-white) 8%, var(--midnight-navy)) !important; }
+[data-bs-theme="dark"] .pagination .page-link { background: transparent; color: var(--pearl-white); border-color: var(--border-color); }
+[data-bs-theme="dark"] .pagination .active .page-link { background: var(--champagne); color: var(--midnight-navy); }
+[data-bs-theme="dark"] .team-stat-value, [data-bs-theme="dark"] .player-stat-value,
+[data-bs-theme="dark"] .team-card-name, [data-bs-theme="dark"] .player-card-name {
+  color: var(--pearl-white);
+}
+[data-bs-theme="dark"] .ball-bubble { background: color-mix(in srgb, var(--pearl-white) 12%, var(--midnight-navy)); color: var(--pearl-white); }
+[data-bs-theme="dark"] .bg-card-custom { color: var(--pearl-white); }
+[data-bs-theme="dark"] .bg-card-custom .text-muted { color: color-mix(in srgb, var(--pearl-white) 74%, transparent) !important; }
+
+/* Footer + newsletter in dark theme */
+[data-bs-theme="dark"] .footer-custom .newsletter-box .form-control {
+  background: color-mix(in srgb, var(--pearl-white) 10%, var(--midnight-navy)) !important;
+  border-color: color-mix(in srgb, var(--pearl-white) 30%, transparent) !important;
+  color: var(--pearl-white) !important;
+}
+[data-bs-theme="dark"] .footer-custom .newsletter-box .form-control::placeholder {
+  color: color-mix(in srgb, var(--pearl-white) 65%, transparent) !important;
+}
+
+/* Empty states + skeletons */
+[data-bs-theme="dark"] .empty-state { color: color-mix(in srgb, var(--pearl-white) 75%, transparent); }
+[data-bs-theme="dark"] .empty-state-icon { background: color-mix(in srgb, var(--pearl-white) 10%, var(--midnight-navy)); color: var(--champagne); }
+[data-bs-theme="dark"] .skeleton { background: linear-gradient(90deg, color-mix(in srgb, var(--pearl-white) 8%, var(--midnight-navy)), color-mix(in srgb, var(--pearl-white) 14%, var(--midnight-navy)), color-mix(in srgb, var(--pearl-white) 8%, var(--midnight-navy))); background-size: 200% 100%; }

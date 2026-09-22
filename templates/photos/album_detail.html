@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ album.title }} - Photo Gallery - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Breadcrumb -->
+  <nav class="small text-muted mb-3">
+    <a href="{% url 'home' %}" class="text-reset text-decoration-none">Home</a> &bull;
+    <a href="{% url 'photos:album_list' %}" class="text-reset text-decoration-none">Photos</a> &bull;
+    <span>{{ album.title }}</span>
+  </nav>
+
+  <!-- Album Header -->
+  <div class="mb-4 pb-3 border-bottom">
+    <span class="badge bg-emerald mb-2">{{ album.get_category_display }}</span>
+    <h2 class="fw-bold mb-2">{{ album.title }}</h2>
+    <p class="text-secondary small mb-0">{{ album.description }}</p>
+  </div>
+
+  <!-- Photos Grid -->
+  <div class="row g-3 mb-5">
+    {% for photo in photos %}
+      <div class="col-lg-3 col-md-4 col-6">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden h-100 content-card">
+          <div class="card-thumb" style="padding-top: 75%; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#lightboxModal" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }}" data-credit="{{ photo.photo_credit }}">
+            <img src="{{ photo.image.url }}" alt="{{ photo.caption }}">
+          </div>
+          {% if photo.caption %}
+            <div class="p-2 small text-muted text-truncate">{{ photo.caption }}</div>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 py-5 text-center text-muted">
+        <p>No photos uploaded to this album yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Related Albums -->
+  {% if other_albums %}
+    <div class="border-top pt-4">
+      <h5 class="fw-bold mb-3">More Photo Albums</h5>
+      <div class="row g-3">
+        {% for oa in other_albums %}
+          <div class="col-lg-3 col-md-6">
+            <a href="{{ oa.get_absolute_url }}" class="text-decoration-none text-reset">
+              <div class="content-card h-100">
+                <div class="card-thumb" style="padding-top: 60%;">
+                  <img src="{{ oa.get_cover_url }}" alt="{{ oa.title }}">
+                </div>
+                <div class="p-2 small fw-bold text-truncate">{{ oa.title }}</div>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Lightbox Modal -->
+<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-0">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-3">
+        <img id="lightboxImg" src="" alt="" class="img-fluid rounded mb-3" style="max-height: 75vh;">
+        <div id="lightboxCaption" class="fw-semibold"></div>
+        <small id="lightboxCredit" class="text-secondary d-block"></small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('lightboxModal');
+    if (modal) {
+      modal.addEventListener('show.bs.modal', (e) => {
+        const trigger = e.relatedTarget;
+        const imgSrc = trigger.getAttribute('data-img-src');
+        const caption = trigger.getAttribute('data-caption');
+        const credit = trigger.getAttribute('data-credit');
+
+        document.getElementById('lightboxImg').src = imgSrc;
+        document.getElementById('lightboxCaption').textContent = caption || '';
+        document.getElementById('lightboxCredit').textContent = credit ? `Photo by: ${credit}` : '';
+      });
+    }
+  });
+</script>
+{% endblock %}

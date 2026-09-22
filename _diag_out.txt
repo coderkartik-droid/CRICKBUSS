@@ -1,0 +1,12 @@
+    def check(self, **kwargs):
+        return [
+            *super().check(**kwargs),
+            *self._check_image_library_installed(),
+        ]
+
+---
+PIL import FAILED: ImportError cannot import name '_imaging' from 'PIL' (C:\Users\hari1\AppData\Local\Programs\Python\Python313\Lib\site-packages\PIL\__init__.py)
+gid func OK
+avatar_field type mro: ['ImageField', 'FileField', 'Field', 'RegisterLookupMixin', 'object']
+field.check = [<Error: level=40, msg='Cannot use ImageField because Pillow is not installed.', hint='Get Pillow at https://pypi.org/project/Pillow/ or run command "python -m pip install Pillow".', obj=<django.db.models.fields.files.ImageField: avatar>, id='fields.E210'>]
+CustomUser.avatar: [<Error: level=40, msg='Cannot use ImageField because Pillow is not installed.', hint='Get Pillow at https://pypi.org/project/Pillow/ or run command "python -m pip install Pillow".', obj=<django.db.models.fields.files.ImageField: avatar>, id='fields.E210'>]

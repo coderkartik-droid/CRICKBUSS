@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Cricket Match Schedule, Live Scores & Results - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Page Header & Filter Tabs -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3" style="border-bottom: 2px solid var(--border-light);">
+    <div>
+      <h2 class="fw-bold mb-1">Cricket Fixtures & Scores</h2>
+      <p class="text-muted small mb-0">Follow live ball-by-ball updates, upcoming local fixtures, and recent match results.</p>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <div class="btn-group" role="group">
+        <a href="?status=all" class="btn btn-sm {% if active_status == 'all' %}btn-emerald{% else %}btn-ghost{% endif %}">All</a>
+        <a href="?status=live" class="btn btn-sm {% if active_status == 'live' %}btn-emerald{% else %}btn-ghost{% endif %}">
+          <span class="pulse-dot d-inline-block me-1"></span> Live
+        </a>
+        <a href="?status=upcoming" class="btn btn-sm {% if active_status == 'upcoming' %}btn-emerald{% else %}btn-ghost{% endif %}">Upcoming</a>
+        <a href="?status=completed" class="btn btn-sm {% if active_status == 'completed' %}btn-emerald{% else %}btn-ghost{% endif %}">Results</a>
+      </div>
+
+      <form method="GET" class="d-inline-block">
+        <input type="hidden" name="status" value="{{ active_status }}">
+        <select name="type" class="form-select" onchange="this.form.submit()">
+          <option value="">All Formats</option>
+          {% for val, label in match_types %}
+            <option value="{{ val }}" {% if active_type == val %}selected{% endif %}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <!-- Matches Grid -->
+  <div class="row g-4">
+    {% for match in matches %}
+      <div class="col-lg-4 col-md-6">
+        <div class="match-card {% if match.status == 'live' %}is-live{% endif %}">
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-dark border border-secondary text-light font-monospace small">
+                {{ match.match_type }} • {{ match.match_number }}
+              </span>
+              {% if match.status == 'live' %}
+                <span class="badge-live"><span class="pulse-dot"></span> LIVE</span>
+              {% elif match.status == 'upcoming' %}
+                <span class="badge bg-secondary text-light">{{ match.start_datetime|date:"d M, H:i" }}</span>
+              {% else %}
+                <span class="badge bg-success">Completed</span>
+              {% endif %}
+            </div>
+
+            <!-- Series Name -->
+            {% if match.series %}
+              <div class="text-muted small fw-semibold mb-2 text-truncate">{{ match.series.name }}</div>
+            {% endif %}
+
+            <!-- Team 1 -->
+            <div class="team-row">
+              <div class="team-info">
+                <img src="{{ match.team1.get_logo_url }}" alt="{{ match.team1.name }}" class="team-logo-sm">
+                <span class="fw-bold">{{ match.team1.name }}</span>
+              </div>
+              <div class="team-score">
+                {% for inn in match.innings.all %}
+                  {% if inn.batting_team == match.team1 %}
+                    {{ inn.runs }}/{{ inn.wickets }} <span class="team-overs">({{ inn.overs_formatted }})</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Team 2 -->
+            <div class="team-row">
+              <div class="team-info">
+                <img src="{{ match.team2.get_logo_url }}" alt="{{ match.team2.name }}" class="team-logo-sm">
+                <span class="fw-bold">{{ match.team2.name }}</span>
+              </div>
+              <div class="team-score">
+                {% for inn in match.innings.all %}
+                  {% if inn.batting_team == match.team2 %}
+                    {{ inn.runs }}/{{ inn.wickets }} <span class="team-overs">({{ inn.overs_formatted }})</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Venue & Summary -->
+            <div class="match-status-summary">
+              {% if match.result_text %}
+                {{ match.result_text }}
+              {% elif match.status == 'live' %}
+                Innings in progress
+              {% else %}
+                Venue: {{ match.venue.name|default:"TBD" }}
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+            <a href="{% url 'matches:match_detail' slug=match.slug %}" class="btn btn-sm btn-emerald px-3">
+              Full Match Center &rarr;
+            </a>
+            <button class="btn btn-sm text-secondary border-0 btn-save-match" data-match-id="{{ match.id }}" title="Save to watchlist">
+              <i class="fa-regular fa-bookmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 py-5">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <h4>No matches found</h4>
+          <p>No matches match your current filter. Try switching tabs or resetting the format filter.</p>
+          <a href="{% url 'matches:match_list' %}" class="btn btn-outline-emerald">Reset Filters</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <nav class="mt-5 d-flex justify-content-center">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ active_status }}&type={{ active_type }}">&laquo; Previous</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&status={{ active_status }}&type={{ active_type }}">Next &raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

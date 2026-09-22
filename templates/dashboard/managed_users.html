@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage {{ role|title }}s{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Manage {{ role|title }}s</h2>
+      <p class="text-muted mb-0">Create, activate, disable, reset, or remove managed accounts.</p>
+    </div>
+  </div>
+
+  <div class="content-card p-4 mb-4">
+    <h5 class="fw-bold mb-3">{% if is_editing %}Edit{% else %}Add{% endif %} {{ role|title }}</h5>
+    <form method="post" class="management-form">
+      {% csrf_token %}
+      <input type="hidden" name="role" value="{{ role }}">
+      {% if is_editing %}<input type="hidden" name="user_id" value="{{ form.instance.pk }}">{% endif %}
+      <section class="form-section">
+      {% for field in form %}
+        <div class="form-field">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required-mark">*</span>{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+      </section>
+      <div class="form-actions">
+        <button class="btn btn-emerald" type="submit">{% if is_editing %}Save{% else %}Add{% endif %} {{ role|title }}</button>
+        <a class="btn btn-ghost" href="{% url 'dashboard:managed_users' %}?role={{ role }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="content-card overflow-hidden">
+    <div class="table-responsive">
+      <table class="table sports-table mb-0 align-middle">
+        <thead><tr><th>Email</th><th>Name</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          {% for managed_user in users %}
+          <tr>
+            <td>{{ managed_user.email }}</td>
+            <td>{{ managed_user.get_full_name }}</td>
+            <td>{% if managed_user.is_active %}<span class="text-success">Active</span>{% else %}<span class="text-danger">Disabled</span>{% endif %}</td>
+            <td class="text-end">
+              <form method="post" class="d-inline">
+                {% csrf_token %}<input type="hidden" name="user_id" value="{{ managed_user.pk }}"><input type="hidden" name="action" value="toggle"><input type="hidden" name="role" value="{{ role }}">
+                <button class="btn btn-sm btn-outline-secondary" type="submit">{% if managed_user.is_active %}Disable{% else %}Enable{% endif %}</button>
+              </form>
+              <a class="btn btn-sm btn-outline-primary" href="?role={{ role }}&edit={{ managed_user.pk }}">Edit</a>
+              <form method="post" class="d-inline">
+                {% csrf_token %}<input type="hidden" name="user_id" value="{{ managed_user.pk }}"><input type="hidden" name="action" value="reset_password"><input type="hidden" name="role" value="{{ role }}">
+                <div class="reset-password-group">
+                  <input type="password" name="password" required minlength="8" placeholder="New password" class="form-control form-control-sm">
+                  <button class="btn btn-sm btn-outline-warning" type="submit">Reset</button>
+                </div>
+              </form>
+              <form method="post" class="d-inline">
+                {% csrf_token %}<input type="hidden" name="user_id" value="{{ managed_user.pk }}"><input type="hidden" name="action" value="delete"><input type="hidden" name="role" value="{{ role }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="text-center text-muted py-4">No managed accounts yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Cricket Players Directory - Stats, Profiles & Bio - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1">Cricket Players Directory</h2>
+      <p class="text-muted small mb-0">Search and filter local cricket players.</p>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <form method="GET" class="d-flex gap-2">
+        <select name="role" class="form-select" onchange="this.form.submit()">
+          <option value="">All Roles</option>
+          {% for r_val, r_label in roles %}
+            <option value="{{ r_val }}" {% if active_role == r_val %}selected{% endif %}>{{ r_label }}</option>
+          {% endfor %}
+        </select>
+        <div class="input-group">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Player name...">
+          <button class="btn btn-emerald" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {% for player in players %}
+      <div class="col-lg-3 col-md-4 col-sm-6">
+        <a href="{{ player.get_absolute_url }}" class="text-decoration-none text-reset">
+          <div class="player-card">
+            <img src="{{ player.get_image_url }}" alt="{{ player.name }}" class="player-card-image">
+            <h6 class="player-card-name">{{ player.name }}</h6>
+            <div class="player-card-team">{{ player.primary_team.name|default:"Free Agent" }}</div>
+            <span class="player-card-role">{{ player.get_role_display }}</span>
+            <div class="player-card-stats">
+              <div class="player-stat">
+                <div class="player-stat-value">{{ player.get_batting_style_display }}</div>
+                <div class="player-stat-label">Style</div>
+              </div>
+              <div class="player-stat">
+                <div class="player-stat-value">{{ player.primary_team.short_name|default:"N/A" }}</div>
+                <div class="player-stat-label">Team</div>
+              </div>
+            </div>
+            <div class="player-card-footer">
+              <span class="fw-semibold" style="color: var(--primary);">View Profile &rarr;</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-12 py-5">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <h4>No Players Found</h4>
+          <p>No players found matching your criteria. Try adjusting your search or filters.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-5 d-flex justify-content-center">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next &raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

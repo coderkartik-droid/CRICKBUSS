@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Website Customization & Branding Settings - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fa-solid fa-palette text-emerald me-2"></i>Website Customization</h3>
+      <p class="text-muted small mb-0">Update platform brand identity, colors, banners, and contact information without editing code.</p>
+    </div>
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i> Admin Portal
+    </a>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="row g-4">
+      <!-- Branding & Colors -->
+      <div class="col-lg-6">
+        <div class="content-card p-4 h-100">
+          <h5 class="fw-bold mb-3 border-bottom pb-2">Brand Identity & Color Scheme</h5>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Platform Name</label>
+            <input type="text" name="site_name" class="form-control" value="{{ setting.site_name }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Site Tagline</label>
+            <input type="text" name="site_tagline" class="form-control" value="{{ setting.site_tagline }}">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Primary Theme Color</label>
+              <div class="input-group">
+                <input type="color" name="primary_color" class="form-control form-control-color" value="{{ setting.primary_color }}" style="width:50px;">
+                <input type="text" class="form-control font-monospace" value="{{ setting.primary_color }}" readonly>
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Secondary Accent Color</label>
+              <div class="input-group">
+                <input type="color" name="secondary_color" class="form-control form-control-color" value="{{ setting.secondary_color }}" style="width:50px;">
+                <input type="text" class="form-control font-monospace" value="{{ setting.secondary_color }}" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Custom Logo Image</label>
+            {% if setting.logo %}
+              <div class="mb-2"><img src="{{ setting.logo.url }}" alt="Current Logo" style="height:38px;"></div>
+            {% endif %}
+            <input type="file" name="logo" class="form-control" accept="image/*">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Custom Favicon Image</label>
+            {% if setting.favicon %}
+              <div class="mb-2"><img src="{{ setting.favicon.url }}" alt="Current Favicon" style="width:24px;height:24px;"></div>
+            {% endif %}
+            <input type="file" name="favicon" class="form-control" accept="image/*">
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Banner & Homepage -->
+      <div class="col-lg-6">
+        <div class="content-card p-4 h-100">
+          <h5 class="fw-bold mb-3 border-bottom pb-2">Hero Banner & Visuals</h5>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Hero Banner Title</label>
+            <input type="text" name="banner_title" class="form-control" value="{{ setting.banner_title }}">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Hero Banner Subtitle</label>
+            <textarea name="banner_subtitle" rows="3" class="form-control">{{ setting.banner_subtitle }}</textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Hero Background Image</label>
+            {% if setting.banner_image %}
+              <div class="mb-2"><img src="{{ setting.banner_image.url }}" alt="Banner" style="height:70px;border-radius:8px;object-fit:cover;"></div>
+            {% endif %}
+            <input type="file" name="banner_image" class="form-control" accept="image/*">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Footer Copyright Text</label>
+            <textarea name="footer_text" rows="2" class="form-control">{{ setting.footer_text }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact & Social Media Links -->
+      <div class="col-12">
+        <div class="content-card p-4">
+          <h5 class="fw-bold mb-3 border-bottom pb-2">Contact Info & Social Handles</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Official Email</label>
+              <input type="email" name="contact_email" class="form-control" value="{{ setting.contact_email }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Support Phone</label>
+              <input type="text" name="contact_phone" class="form-control" value="{{ setting.contact_phone }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Headquarters Address</label>
+              <input type="text" name="address" class="form-control" value="{{ setting.address }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small"><i class="fa-brands fa-facebook text-primary me-1"></i>Facebook</label>
+              <input type="url" name="facebook_url" class="form-control" value="{{ setting.facebook_url }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small"><i class="fa-brands fa-x-twitter me-1"></i>Twitter / X</label>
+              <input type="url" name="twitter_url" class="form-control" value="{{ setting.twitter_url }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small"><i class="fa-brands fa-instagram text-danger me-1"></i>Instagram</label>
+              <input type="url" name="instagram_url" class="form-control" value="{{ setting.instagram_url }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small"><i class="fa-brands fa-youtube text-danger me-1"></i>YouTube</label>
+              <input type="url" name="youtube_url" class="form-control" value="{{ setting.youtube_url }}">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Action -->
+      <div class="col-12 text-end">
+        <button type="submit" class="btn btn-emerald px-5 py-2 fw-bold shadow-sm">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Save Customizations
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

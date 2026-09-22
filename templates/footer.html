@@ -1,0 +1,69 @@
+<footer class="footer-custom">
+  <div class="container">
+    <div class="row g-4 mb-5">
+      <!-- Col 1: Brand & Bio -->
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="fa-solid fa-baseball-bat-ball text-warning fs-3"></i>
+          <span class="fs-4 fw-bold text-light">CRICK<span class="text-success">BUSS</span></span>
+        </div>
+        <p class="text-secondary small pe-lg-4">
+          CRICKBUSS is a local cricket platform for live ball-by-ball scoring, match analytics, player statistics, tournament updates, and local cricket news.
+        </p>
+        <div class="d-flex gap-3 text-secondary mt-3">
+          <a href="#" class="fs-5"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" class="fs-5"><i class="fa-brands fa-facebook"></i></a>
+          <a href="#" class="fs-5"><i class="fa-brands fa-youtube"></i></a>
+          <a href="#" class="fs-5"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="fs-5"><i class="fa-brands fa-telegram"></i></a>
+        </div>
+      </div>
+
+      <!-- Col 2: Quick Links -->
+      <div class="col-lg-2 col-md-3 col-6">
+        <h6 class="text-light fw-bold text-uppercase mb-3">Local Competitions</h6>
+        <ul class="list-unstyled small d-flex flex-column gap-2">
+          <li><a href="{% url 'series:series_list' %}">Local Tournaments</a></li>
+          <li><span class="text-secondary">No competitions available</span></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Site Features -->
+      <div class="col-lg-2 col-md-3 col-6">
+        <h6 class="text-light fw-bold text-uppercase mb-3">Explore</h6>
+        <ul class="list-unstyled small d-flex flex-column gap-2">
+          <li><a href="{% url 'matches:match_list' %}">Live Scores</a></li>
+          <li><a href="{% url 'rankings:rankings_list' %}">Local Rankings</a></li>
+          <li><a href="{% url 'news:news_list' %}">Latest Cricket News</a></li>
+          <li><a href="{% url 'videos:video_list' %}">Match Highlights</a></li>
+          <li><a href="{% url 'photos:album_list' %}">Photo Galleries</a></li>
+          <li><a href="{% url 'teams:team_list' %}">All Teams</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Newsletter & Legal -->
+      <div class="col-lg-4 col-md-12">
+        <div class="newsletter-box">
+          <h6 class="text-light fw-bold text-uppercase mb-2"><i class="fa-regular fa-envelope me-2 text-warning"></i> Cricket Newsletter</h6>
+          <p class="small newsletter-copy mb-3">Get morning match roundups, fantasy insights, and breaking transfers directly in your inbox.</p>
+          <form action="{% url 'matches:newsletter_subscribe' %}" method="POST" class="d-flex flex-column flex-sm-row gap-2">
+            {% csrf_token %}
+            <input type="email" name="email" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Enter your email address" required>
+            <button type="submit" class="btn btn-sm btn-emerald text-nowrap">Subscribe</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-4 border-top border-secondary border-opacity-25 small text-secondary">
+      <div>&copy; 2026 CrickScore Live. All rights reserved. Built with Django, Channels, and Chart.js.</div>
+      <div class="d-flex gap-3 mt-2 mt-md-0">
+        <a href="{% url 'about' %}">About Us</a>
+        <a href="{% url 'contact' %}">Contact</a>
+        <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
+        <a href="{% url 'terms' %}">Terms of Service</a>
+      </div>
+    </div>
+  </div>
+</footer>

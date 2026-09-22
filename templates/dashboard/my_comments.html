@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}My Comments & Discussion Activity - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4 pb-3 border-bottom">
+    <h3 class="fw-bold mb-1">My Discussion Activity</h3>
+    <p class="text-muted small mb-0">Review all comments you have shared across cricket articles and match stories.</p>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-subtle fw-bold py-3">Comment History ({{ comments.count }})</div>
+    <div class="list-group list-group-flush">
+      {% for comment in comments %}
+        <div class="list-group-item p-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small text-muted">On Article: <a href="{{ comment.article.get_absolute_url }}" class="fw-bold text-emerald text-decoration-none">{{ comment.article.title }}</a></span>
+            <span class="small text-muted">{{ comment.created_at|date:"d M Y, H:i" }}</span>
+          </div>
+          <p class="mb-0 small text-main">{{ comment.content }}</p>
+        </div>
+      {% empty %}
+        <div class="p-5 text-center text-muted">
+          <i class="fa-regular fa-comments fs-2 mb-2"></i>
+          <h5>No comments posted yet.</h5>
+          <p class="small">Join the conversation on any cricket news story!</p>
+          <a href="{% url 'news:news_list' %}" class="btn btn-sm btn-emerald">Browse News</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

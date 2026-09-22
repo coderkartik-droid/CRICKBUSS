@@ -1,0 +1,610 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{{ match.title }} Live Score, Scorecard & Commentary - CRICKBUSS{% endblock %}
+
+{% block content %}
+<!-- MATCH HEADER BANNER -->
+<section class="py-4 border-bottom" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--bg-dark) 100%); color: var(--pearl-white);">
+  <div class="container">
+    <!-- Breadcrumb & Series -->
+    <div class="d-flex justify-content-between align-items-center mb-2 small" style="color: color-mix(in srgb, var(--pearl-white) 70%, transparent);">
+      <div>
+        <a href="{% url 'home' %}" class="text-decoration-none" style="color: color-mix(in srgb, var(--pearl-white) 70%, transparent);">Home</a> &bull;
+        <a href="{% url 'matches:match_list' %}" class="text-decoration-none" style="color: color-mix(in srgb, var(--pearl-white) 70%, transparent);">Matches</a> &bull;
+        <span style="color: var(--pearl-white);">{{ match.series.name|default:"Bilateral Match" }}</span>
+      </div>
+      <div>
+        <button class="btn btn-sm btn-ghost rounded-pill btn-save-match px-3 {% if is_saved %}active{% endif %}" data-match-id="{{ match.id }}" style="border-color: color-mix(in srgb, var(--pearl-white) 30%, transparent); color: var(--pearl-white);">
+          <i class="{% if is_saved %}fa-solid fa-bookmark{% else %}fa-regular fa-bookmark{% endif %}"></i>
+          <span>{% if is_saved %}Saved to Watchlist{% else %}Save Match{% endif %}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Match Title & Status Badge -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <h4 class="fw-bold mb-0 text-light">{{ match.title }}</h4>
+      {% if match.status == 'live' %}
+        <span class="badge-live-custom"><span class="pulse-dot"></span> LIVE IN PROGRESS</span>
+      {% elif match.status == 'upcoming' %}
+        <span class="badge bg-secondary font-monospace">{{ match.start_datetime|date:"l, d M Y, H:i e" }}</span>
+      {% else %}
+        <span class="badge" style="background: var(--primary); color: var(--pearl-white);">COMPLETED</span>
+      {% endif %}
+      <span class="badge bg-dark border border-secondary text-secondary font-monospace">{{ match.match_type }}</span>
+    </div>
+
+    <!-- Main Score Billboard -->
+    <div class="row g-3 align-items-center scoreboard-billboard">
+      <!-- Team 1 Billboard -->
+      <div class="col-6 col-md-5">
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+          <img src="{{ match.team1.get_logo_url }}" alt="{{ match.team1.name }}" class="rounded-circle team-logo-billboard">
+          <div class="overflow-hidden">
+            <h5 class="fw-bold mb-0 text-light text-truncate" style="font-size: clamp(0.9rem, 2.5vw, 1.25rem);">{{ match.team1.name }}</h5>
+            <div class="score-display fw-bold" style="color: var(--accent);">
+              {% for inn in match.innings.all %}
+                {% if inn.batting_team == match.team1 %}
+                  {{ inn.runs }}/{{ inn.wickets }} <span class="overs-display" style="color: color-mix(in srgb, var(--pearl-white) 70%, transparent);">({{ inn.overs_formatted }})</span>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VS / Status divider -->
+      <div class="col-12 col-md-2 text-center order-last order-md-0 py-2 py-md-0" style="color: color-mix(in srgb, var(--pearl-white) 60%, transparent);">
+        <div class="fw-bold fs-5 d-none d-md-block" style="color: var(--accent);">VS</div>
+        <div class="text-truncate small opacity-75">{{ match.match_number }}</div>
+      </div>
+
+      <!-- Team 2 Billboard -->
+      <div class="col-6 col-md-5">
+        <div class="d-flex align-items-center justify-content-end gap-2 gap-md-3">
+          <div class="text-end overflow-hidden">
+            <h5 class="fw-bold mb-0 text-light text-truncate" style="font-size: clamp(0.9rem, 2.5vw, 1.25rem);">{{ match.team2.name }}</h5>
+            <div class="score-display fw-bold" style="color: var(--accent);">
+              {% for inn in match.innings.all %}
+                {% if inn.batting_team == match.team2 %}
+                  {{ inn.runs }}/{{ inn.wickets }} <span class="overs-display" style="color: color-mix(in srgb, var(--pearl-white) 70%, transparent);">({{ inn.overs_formatted }})</span>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+          <img src="{{ match.team2.get_logo_url }}" alt="{{ match.team2.name }}" class="rounded-circle team-logo-billboard">
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Text / Toss Banner -->
+    <div class="mt-3 pt-3 border-top d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 small" style="border-color: color-mix(in srgb, var(--pearl-white) 10%, transparent);">
+      <div class="fw-bold fs-6" style="color: var(--accent);">
+        {% if match.result_text %}
+          <i class="fa-solid fa-trophy me-1"></i> {{ match.result_text }}
+        {% elif match.toss_winner %}
+          <i class="fa-solid fa-coins me-1"></i> {{ match.toss_winner.name }} won the toss and {{ match.get_toss_decision_display }}
+        {% else %}
+          Toss yet to take place
+        {% endif %}
+      </div>
+      <div style="color: color-mix(in srgb, var(--pearl-white) 80%, transparent);">
+        <i class="fa-solid fa-location-dot me-1" style="color: var(--primary);"></i> {{ match.venue.name|default:"TBD Venue" }}, {{ match.venue.city|default:"" }}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MATCH CENTER SUB-NAV TABS -->
+<div class="bg-card border-bottom sticky-top" style="top: 56px; z-index: 1020; border-color: var(--border-color);">
+  <div class="container">
+    <ul class="nav nav-underline border-0 flex-nowrap overflow-x-auto no-scrollbar" id="matchTabs" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link text-nowrap fw-bold {% if active_tab == 'live' %}active{% endif %}" id="live-tab" data-bs-toggle="tab" data-bs-target="#live-content" type="button" role="tab">
+          <i class="fa-solid fa-bolt me-1" style="color: var(--live-red);"></i> Live Center
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link text-nowrap fw-bold {% if active_tab == 'scorecard' %}active{% endif %}" id="scorecard-tab" data-bs-toggle="tab" data-bs-target="#scorecard-content" type="button" role="tab">
+          Scorecard
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link text-nowrap fw-bold {% if active_tab == 'commentary' %}active{% endif %}" id="commentary-tab" data-bs-toggle="tab" data-bs-target="#commentary-content" type="button" role="tab">
+          Ball by Ball
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link text-nowrap fw-bold {% if active_tab == 'playing_xi' %}active{% endif %}" id="playingxi-tab" data-bs-toggle="tab" data-bs-target="#playingxi-content" type="button" role="tab">
+          Playing XI
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link text-nowrap fw-bold {% if active_tab == 'graphs' %}active{% endif %}" id="graphs-tab" data-bs-toggle="tab" data-bs-target="#graphs-content" type="button" role="tab">
+          Worm & Run Rate Graphs
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link text-nowrap fw-bold {% if active_tab == 'info' %}active{% endif %}" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-content" type="button" role="tab">
+          Match Info & H2H
+        </button>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- TAB CONTENTS -->
+<div class="container py-4">
+  <div class="tab-content" id="matchTabsContent">
+
+    <!-- ================= 1. LIVE CENTER TAB ================= -->
+    <div class="tab-pane fade {% if active_tab == 'live' %}show active{% endif %}" id="live-content" role="tabpanel">
+      <div class="row g-4">
+        <!-- Live Crease Details & Current Over -->
+        <div class="col-lg-8">
+          {% if current_inn %}
+            <!-- Current Crease Batters -->
+            <div class="content-card mb-4 overflow-hidden">
+              <div class="card-header-clean">
+                <span>Batter at Crease ({{ current_inn.batting_team.short_name }} Innings)</span>
+                <span class="badge" style="background: var(--primary); color: var(--pearl-white);" id="liveCRRDisplay">CRR: {{ current_inn.current_run_rate }}</span>
+              </div>
+              <div class="p-0">
+                <table class="sports-table">
+                  <thead>
+                    <tr>
+                      <th class="ps-3">Batter</th>
+                      <th class="text-center">R</th>
+                      <th class="text-center">B</th>
+                      <th class="text-center">4s</th>
+                      <th class="text-center">6s</th>
+                      <th class="text-end pe-3">SR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for batter in crease_batters %}
+                      <tr>
+                        <td class="ps-3 fw-bold" style="color: var(--primary);">
+                          <i class="fa-solid fa-baseball-bat-ball me-1" style="color: var(--accent);"></i>
+                          <a href="{{ batter.player.get_absolute_url }}" class="text-reset text-decoration-none">{{ batter.player.name }}</a>
+                        </td>
+                        <td class="text-center fw-bold">{{ batter.runs }}</td>
+                        <td class="text-center">{{ batter.balls_faced }}</td>
+                        <td class="text-center">{{ batter.fours }}</td>
+                        <td class="text-center">{{ batter.sixes }}</td>
+                        <td class="text-end pe-3 fw-semibold">{{ batter.strike_rate }}</td>
+                      </tr>
+                    {% empty %}
+                      <tr><td colspan="6" class="text-center py-3 text-muted">No batters currently marked at crease.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Current Bowler -->
+            {% if current_bowler %}
+              <div class="content-card mb-4 overflow-hidden">
+                <div class="card-header-clean">
+                  <span>Current Bowler</span>
+                </div>
+                <table class="sports-table">
+                  <thead>
+                    <tr>
+                      <th class="ps-3">Bowler</th>
+                      <th class="text-center">O</th>
+                      <th class="text-center">M</th>
+                      <th class="text-center">R</th>
+                      <th class="text-center">W</th>
+                      <th class="text-end pe-3">Econ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="ps-3 fw-bold">
+                        <a href="{{ current_bowler.player.get_absolute_url }}" class="text-reset text-decoration-none">{{ current_bowler.player.name }}</a>
+                      </td>
+                      <td class="text-center">{{ current_bowler.overs }}.{{ current_bowler.balls }}</td>
+                      <td class="text-center">{{ current_bowler.maidens }}</td>
+                      <td class="text-center">{{ current_bowler.runs_conceded }}</td>
+                      <td class="text-center fw-bold" style="color: var(--live-red);">{{ current_bowler.wickets }}</td>
+                      <td class="text-end pe-3 fw-semibold">{{ current_bowler.economy_rate }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            {% endif %}
+
+            <!-- Recent Balls Bubbles -->
+            <div class="content-card mb-4 p-3">
+              <h6 class="fw-bold mb-2">Recent Deliveries:</h6>
+              <div class="over-balls-wrap">
+                {% for ball in recent_balls %}
+                  <span class="ball-bubble {% if ball.is_wicket %}wicket{% elif ball.is_four %}four{% elif ball.is_six %}six{% endif %}" title="{{ ball.commentary }}">
+                    {% if ball.is_wicket %}W{% elif ball.is_four %}4{% elif ball.is_six %}6{% else %}{{ ball.runs_off_bat }}{% endif %}
+                  </span>
+                {% empty %}
+                  <span class="text-muted small">Awaiting next ball...</span>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Live Commentary Stream Preview -->
+          <div class="content-card">
+            <div class="card-header-clean">
+              <span>Live Ball-by-Ball Feed</span>
+              <span class="badge bg-secondary font-monospace" style="font-size: 0.7rem;">Realtime Stream</span>
+            </div>
+            <div class="card-body p-0" id="liveCommentaryStream">
+              {% for ball in all_balls %}
+                <div class="p-3 border-bottom d-flex align-items-start gap-3" style="border-color: var(--border-light);">
+                  <span class="ball-bubble flex-shrink-0 {% if ball.is_wicket %}wicket{% elif ball.is_four %}four{% elif ball.is_six %}six{% endif %}">
+                    {% if ball.is_wicket %}W{% elif ball.is_four %}4{% elif ball.is_six %}6{% else %}{{ ball.runs_off_bat }}{% endif %}
+                  </span>
+                  <div>
+                    <div class="fw-bold small text-muted font-monospace">Over {{ ball.over_number }}.{{ ball.ball_number }} &bull; {{ ball.bowler.name }} to {{ ball.batter.name }}</div>
+                    <p class="mb-0 small">{{ ball.commentary }}</p>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="p-4 text-center text-muted">Ball by ball commentary will appear here when play begins.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Partnerships & Match Conditions -->
+        <div class="col-lg-4">
+          <!-- Partnerships -->
+          {% if current_inn and current_inn.partnerships.exists %}
+            <div class="content-card mb-4">
+              <div class="card-header-clean">
+                <span>Partnerships ({{ current_inn.batting_team.short_name }})</span>
+              </div>
+              <ul class="list-group list-group-flush small">
+                {% for p in current_inn.partnerships.all %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="border-color: var(--border-light);">
+                    <div>
+                      <div class="fw-semibold">{{ p.batter1.name }} & {{ p.batter2.name }}</div>
+                      <small class="text-muted">{{ p.wicket_number }}th Wicket</small>
+                    </div>
+                    <span class="badge bg-light text-dark border">{{ p.runs }} <small class="text-muted">({{ p.balls }}b)</small></span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <!-- Match Conditions Info Card -->
+          <div class="content-card mb-4">
+            <div class="card-header-clean">
+              <span>Match Conditions</span>
+            </div>
+            <div class="card-body small">
+              <div class="mb-2">
+                <strong><i class="fa-solid fa-cloud-sun me-1" style="color: var(--accent);"></i> Weather:</strong>
+                <div>{{ match.weather_report }}</div>
+              </div>
+              <div class="mb-2">
+                <strong><i class="fa-solid fa-road me-1" style="color: var(--text-muted);"></i> Pitch Report:</strong>
+                <div>{{ match.pitch_report }}</div>
+              </div>
+              <div class="mb-0">
+                <strong><i class="fa-solid fa-building me-1" style="color: var(--secondary);"></i> Venue Stats:</strong>
+                <div>Avg 1st Innings: {{ match.venue.avg_first_innings_score }} runs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 2. FULL SCORECARD TAB ================= -->
+    <div class="tab-pane fade {% if active_tab == 'scorecard' %}show active{% endif %}" id="scorecard-content" role="tabpanel">
+      {% for inn in innings_list %}
+        <div class="content-card mb-4 overflow-hidden">
+          <div class="card-header-clean" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--bg-dark) 100%); color: var(--pearl-white); border-color: var(--border-color);">
+            <h6 class="mb-0 fw-bold text-light">{{ inn.batting_team.name }} Innings</h6>
+            <div class="fs-5 fw-bold" style="color: var(--accent);">{{ inn.runs }}/{{ inn.wickets }} <span class="fs-6 font-monospace" style="color: color-mix(in srgb, var(--pearl-white) 80%, transparent);">({{ inn.overs_formatted }} Ov)</span></div>
+          </div>
+
+          <!-- Batting Table -->
+          <div class="table-responsive">
+            <table class="sports-table">
+              <thead>
+                <tr>
+                  <th class="ps-3" style="width: 35%;">Batter</th>
+                  <th style="width: 25%;">Dismissal</th>
+                  <th class="text-center">R</th>
+                  <th class="text-center">B</th>
+                  <th class="text-center">4s</th>
+                  <th class="text-center">6s</th>
+                  <th class="text-end pe-3">SR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for b in inn.batters.all %}
+                  <tr>
+                    <td class="ps-3">
+                      <a href="{{ b.player.get_absolute_url }}" class="fw-bold text-reset text-decoration-none">{{ b.player.name }}</a>
+                    </td>
+                    <td class="text-muted small">{{ b.dismissal_text }}</td>
+                    <td class="text-center fw-bold">{{ b.runs }}</td>
+                    <td class="text-center">{{ b.balls_faced }}</td>
+                    <td class="text-center">{{ b.fours }}</td>
+                    <td class="text-center">{{ b.sixes }}</td>
+                    <td class="text-end pe-3 fw-semibold">{{ b.strike_rate }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="7" class="text-center py-3 text-muted">No batting records for this innings yet.</td></tr>
+                {% endfor %}
+                <tr class="fw-bold" style="background: var(--bg-subtle);">
+                  <td class="ps-3">Extras</td>
+                  <td colspan="6" class="text-end pe-3">
+                    {{ inn.total_extras }} (b {{ inn.byes }}, lb {{ inn.leg_byes }}, w {{ inn.wides }}, nb {{ inn.no_balls }})
+                  </td>
+                </tr>
+                <tr class="fw-bold" style="background: var(--bg-dark); color: var(--pearl-white);">
+                  <td class="ps-3">Total</td>
+                  <td colspan="6" class="text-end pe-3">
+                    {{ inn.runs }}/{{ inn.wickets }} ({{ inn.overs_formatted }} Overs, RR: {{ inn.current_run_rate }})
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Fall of Wickets -->
+          {% if inn.fall_of_wickets.exists %}
+            <div class="p-3 border-top border-bottom small" style="border-color: var(--border-light); background: var(--bg-subtle);">
+              <strong>Fall of Wickets: </strong>
+              {% for fow in inn.fall_of_wickets.all %}
+                <span>{{ fow.wicket_number }}-{{ fow.score }} ({{ fow.player.name }}, {{ fow.overs }} ov){% if not forloop.last %}, {% endif %}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Bowling Table -->
+          <div class="table-responsive">
+            <table class="sports-table">
+              <thead>
+                <tr>
+                  <th class="ps-3" style="width: 40%;">Bowler</th>
+                  <th class="text-center">O</th>
+                  <th class="text-center">M</th>
+                  <th class="text-center">R</th>
+                  <th class="text-center">W</th>
+                  <th class="text-end pe-3">Econ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for bowler in inn.bowlers.all %}
+                  <tr>
+                    <td class="ps-3">
+                      <a href="{{ bowler.player.get_absolute_url }}" class="fw-semibold text-reset text-decoration-none">{{ bowler.player.name }}</a>
+                    </td>
+                    <td class="text-center">{{ bowler.overs }}.{{ bowler.balls }}</td>
+                    <td class="text-center">{{ bowler.maidens }}</td>
+                    <td class="text-center">{{ bowler.runs_conceded }}</td>
+                    <td class="text-center fw-bold" style="color: var(--live-red);">{{ bowler.wickets }}</td>
+                    <td class="text-end pe-3 fw-semibold">{{ bowler.economy_rate }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-clipboard-list fs-1 mb-2"></i>
+          <p>No innings data available yet.</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- ================= 3. BALL BY BALL COMMENTARY TAB ================= -->
+    <div class="tab-pane fade {% if active_tab == 'commentary' %}show active{% endif %}" id="commentary-content" role="tabpanel">
+      <div class="content-card">
+        <div class="card-header-clean">
+          <span>Complete Ball-by-Ball Commentary</span>
+        </div>
+        <div class="card-body p-0" id="fullCommentaryFeed">
+          {% for ball in all_balls %}
+            <div class="p-3 border-bottom d-flex align-items-start gap-3" style="border-color: var(--border-light);">
+              <span class="ball-bubble flex-shrink-0 {% if ball.is_wicket %}wicket{% elif ball.is_four %}four{% elif ball.is_six %}six{% endif %}">
+                {% if ball.is_wicket %}W{% elif ball.is_four %}4{% elif ball.is_six %}6{% else %}{{ ball.runs_off_bat }}{% endif %}
+              </span>
+              <div class="flex-grow-1">
+                <div class="fw-bold small text-muted font-monospace mb-1">Over {{ ball.over_number }}.{{ ball.ball_number }} &bull; {{ ball.bowler.name }} to {{ ball.batter.name }}</div>
+                <p class="mb-0 small">{{ ball.commentary }}</p>
+              </div>
+            </div>
+          {% empty %}
+            <div class="p-4 text-center text-muted">Ball by ball commentary will appear here when play begins.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 4. PLAYING XI TAB ================= -->
+    <div class="tab-pane fade {% if active_tab == 'playing_xi' %}show active{% endif %}" id="playingxi-content" role="tabpanel">
+      <div class="row g-4">
+        <!-- Team 1 XI -->
+        <div class="col-md-6">
+          <div class="content-card">
+            <div class="card-header-clean" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--bg-dark) 100%); color: var(--pearl-white); border-color: var(--border-color);">
+              <img src="{{ match.team1.get_logo_url }}" alt="{{ match.team1.name }}" style="width:24px;height:24px;border-radius:50%;">
+              <span>{{ match.team1.name }} Playing XI</span>
+            </div>
+            <ul class="list-group list-group-flush">
+              {% for p in team1_xi %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="border-color: var(--border-light);">
+                  <div>
+                    <a href="{{ p.get_absolute_url }}" class="fw-bold text-reset text-decoration-none">{{ p.name }}</a>
+                    <small class="text-muted d-block">{{ p.get_role_display }} &bull; {{ p.get_batting_style_display }}</small>
+                  </div>
+                  <span class="badge bg-light text-dark border">{{ p.get_role_display }}</span>
+                </li>
+              {% empty %}
+                <li class="list-group-item text-center text-muted py-3">Lineup to be announced at toss.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Team 2 XI -->
+        <div class="col-md-6">
+          <div class="content-card">
+            <div class="card-header-clean" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--bg-dark) 100%); color: var(--pearl-white); border-color: var(--border-color);">
+              <img src="{{ match.team2.get_logo_url }}" alt="{{ match.team2.name }}" style="width:24px;height:24px;border-radius:50%;">
+              <span>{{ match.team2.name }} Playing XI</span>
+            </div>
+            <ul class="list-group list-group-flush">
+              {% for p in team2_xi %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2" style="border-color: var(--border-light);">
+                  <div>
+                    <a href="{{ p.get_absolute_url }}" class="fw-bold text-reset text-decoration-none">{{ p.name }}</a>
+                    <small class="text-muted d-block">{{ p.get_role_display }} &bull; {{ p.get_batting_style_display }}</small>
+                  </div>
+                  <span class="badge bg-light text-dark border">{{ p.get_role_display }}</span>
+                </li>
+              {% empty %}
+                <li class="list-group-item text-center text-muted py-3">Lineup to be announced at toss.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 5. GRAPHS TAB ================= -->
+    <div class="tab-pane fade {% if active_tab == 'graphs' %}show active{% endif %}" id="graphs-content" role="tabpanel">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="content-card">
+            <div class="card-header-clean">
+              <span>Worm Graph</span>
+            </div>
+            <div class="card-body">
+              <canvas id="wormChart" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="content-card">
+            <div class="card-header-clean">
+              <span>Run Rate Comparison</span>
+            </div>
+            <div class="card-body">
+              <canvas id="runRateChart" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 6. MATCH INFO & H2H TAB ================= -->
+    <div class="tab-pane fade {% if active_tab == 'info' %}show active{% endif %}" id="info-content" role="tabpanel">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="content-card">
+            <div class="card-header-clean">
+              <span>Match Information</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong class="small text-muted">Series:</strong> {{ match.series.name|default:"Bilateral Match" }}
+              </div>
+              <div class="mb-3">
+                <strong class="small text-muted">Match Type:</strong> {{ match.get_match_type_display }}
+              </div>
+              <div class="mb-3">
+                <strong class="small text-muted">Format:</strong> {{ match.cricket_format }}
+              </div>
+              <div class="mb-3">
+                <strong class="small text-muted">Venue:</strong> {{ match.venue.name|default:"TBD" }}
+              </div>
+              <div class="mb-0">
+                <strong class="small text-muted">Match Date:</strong> {{ match.start_datetime|date:"l, d M Y, H:i e" }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="content-card">
+            <div class="card-header-clean">
+              <span>Head to Head Record</span>
+            </div>
+            <div class="card-body">
+              <div class="text-center py-4 text-muted">
+                <i class="fa-solid fa-chart-simple fs-1 mb-2"></i>
+                <p>Head to head statistics will be available once teams have played multiple matches.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Initialize charts if graphs tab is active
+  {% if active_tab == 'graphs' %}
+    document.addEventListener('DOMContentLoaded', () => {
+      // Worm Chart
+      const wormCtx = document.getElementById('wormChart');
+      if (wormCtx) {
+        new Chart(wormCtx, {
+          type: 'line',
+          data: {
+            labels: [{% for inn in innings_list %}'{{ inn.batting_team.short_name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+              label: 'Cumulative Score',
+              data: [{% for inn in innings_list %}{{ inn.runs }}{% if not forloop.last %},{% endif %}{% endfor %}],
+              borderColor: '#F7E7CE',
+              backgroundColor: 'rgba(247, 231, 206, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+      }
+
+      // Run Rate Chart
+      const runRateCtx = document.getElementById('runRateChart');
+      if (runRateCtx) {
+        new Chart(runRateCtx, {
+          type: 'bar',
+          data: {
+            labels: [{% for inn in innings_list %}'{{ inn.batting_team.short_name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+              label: 'Run Rate',
+              data: [{% for inn in innings_list %}{{ inn.current_run_rate }}{% if not forloop.last %},{% endif %}{% endfor %}],
+              backgroundColor: ['#F7E7CE', '#F7E7CE', '#0B1F3A']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+      }
+    });
+  {% endif %}
+</script>
+{% endblock %}

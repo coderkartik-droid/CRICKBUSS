@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Cricket Series & Tournaments Schedule - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom">
+    <div>
+      <h3 class="fw-bold mb-1">Cricket Series & Tournaments</h3>
+      <p class="text-muted small mb-0">Browse local cricket tournaments and club series.</p>
+    </div>
+
+    <!-- Category filter -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <form method="GET" class="d-flex gap-2">
+        <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">All Local Tournaments</option>
+          {% for cat_val, cat_label in categories %}
+            <option value="{{ cat_val }}" {% if active_category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+          {% endfor %}
+        </select>
+        <div class="input-group input-group-sm">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search series...">
+          <button class="btn btn-emerald" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    {% for s in series_list %}
+      <div class="col-lg-4 col-md-6">
+        <a href="{{ s.get_absolute_url }}" class="text-decoration-none text-reset">
+          <div class="card border-0 shadow-sm rounded-3 p-4 h-100 content-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-emerald">{{ s.get_category_display }}</span>
+              <span class="badge bg-light text-dark border font-monospace">{{ s.cricket_format }}</span>
+            </div>
+            <h5 class="fw-bold mb-2">{{ s.name }}</h5>
+            <div class="small text-muted mb-3">
+              <div><i class="fa-regular fa-calendar me-1"></i> {{ s.start_date|date:"d M" }} - {{ s.end_date|date:"d M Y" }}</div>
+              <div><i class="fa-solid fa-location-dot me-1"></i> Host: {{ s.host_country }}</div>
+            </div>
+            <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center small">
+              <span class="text-muted">{{ s.total_matches }} Matches Scheduled</span>
+              <span class="fw-semibold text-emerald">Schedule & Standings &rarr;</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-12 py-5 text-center text-muted">
+        <h5>No tournaments found.</h5>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-5 d-flex justify-content-center">
+      <ul class="pagination pagination-sm">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next &raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

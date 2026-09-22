@@ -1,0 +1,433 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Admin Operations Portal - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Page Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h3 class="fw-bold mb-0">Platform Administration</h3>
+        <span class="badge bg-danger rounded-pill px-3 py-1 font-monospace" style="font-size:0.75rem;">STAFF OPERATIONS</span>
+      </div>
+
+      <div class="content-card p-4 mb-4">
+        <div class="d-flex align-items-start gap-3">
+          <span class="section-icon"><i class="fa-solid fa-list-check"></i></span>
+          <div>
+            <h5 class="fw-bold mb-1">Getting Started</h5>
+            <p class="text-muted small mb-3">Recommended setup order for your local cricket platform.</p>
+            <div class="d-flex flex-wrap gap-2 small">
+              <span class="badge bg-subtle">1. Create Tournament</span>
+              <span class="badge bg-subtle">2. Add Ground</span>
+              <span class="badge bg-subtle">3. Create Teams</span>
+              <span class="badge bg-subtle">4. Add Players</span>
+              <span class="badge bg-subtle">5. Add Scorers</span>
+              <span class="badge bg-subtle">6. Create Match</span>
+              <span class="badge bg-subtle">7. Start Scoring</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-muted small mb-0">Overview of system health, live matches, user growth, and media records.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 gap-md-3 w-100 w-md-auto justify-content-md-end">
+      {% if request.user.is_superuser %}
+        <a href="/admin/" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+          <i class="fa-solid fa-screwdriver-wrench me-1"></i> Django Admin Portal
+        </a>
+      {% endif %}
+      <a href="{% url 'dashboard:managed_users' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-user-shield me-1"></i> Manage Scorers
+      </a>
+      <a href="{% url 'matches:match_list' %}" class="btn btn-emerald btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-baseball-bat-ball me-1"></i> Live Match Center
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Metric Cards Grid -->
+  <div class="row g-3 mb-4">
+    <!-- Total Users -->
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="content-card p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-semibold">Users</span>
+          <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle" style="width:32px;height:32px;">
+            <i class="fa-solid fa-users" style="font-size:0.85rem;"></i>
+          </div>
+        </div>
+        <h3 class="fw-bold mb-0">{{ total_users }}</h3>
+        <small class="text-success fw-semibold"><i class="fa-solid fa-arrow-up me-1"></i>Active fans</small>
+      </div>
+    </div>
+
+    <!-- Live Matches -->
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="content-card p-3 h-100 border-danger border-opacity-25">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-danger small fw-bold">Live Now</span>
+          <span class="pulse-dot"></span>
+        </div>
+        <h3 class="fw-bold text-danger mb-0">{{ live_matches_count }}</h3>
+        <small class="text-muted">In-play matches</small>
+      </div>
+    </div>
+
+    <!-- Total Matches -->
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="content-card p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-semibold">Matches</span>
+          <div class="d-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning rounded-circle" style="width:32px;height:32px;">
+            <i class="fa-solid fa-trophy" style="font-size:0.85rem;"></i>
+          </div>
+        </div>
+        <h3 class="fw-bold mb-0">{{ total_matches }}</h3>
+        <small class="text-muted">{{ completed_matches_count }} Completed</small>
+      </div>
+    </div>
+
+    <!-- Teams & Players -->
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="content-card p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-semibold">Roster</span>
+          <div class="d-flex align-items-center justify-content-center bg-info bg-opacity-10 text-info rounded-circle" style="width:32px;height:32px;">
+            <i class="fa-solid fa-shield-halved" style="font-size:0.85rem;"></i>
+          </div>
+        </div>
+        <h3 class="fw-bold mb-0">{{ total_players }}</h3>
+        <small class="text-muted">{{ total_teams }} Teams indexed</small>
+      </div>
+    </div>
+
+    <!-- News & Articles -->
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="content-card p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-semibold">Editorial</span>
+          <div class="d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle" style="width:32px;height:32px;">
+            <i class="fa-solid fa-newspaper" style="font-size:0.85rem;"></i>
+          </div>
+        </div>
+        <h3 class="fw-bold mb-0">{{ total_news }}</h3>
+        <small class="text-muted">Published articles</small>
+      </div>
+    </div>
+
+    <!-- Videos & Highlights -->
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+      <div class="content-card p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-semibold">Media</span>
+          <div class="d-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle" style="width:32px;height:32px;">
+            <i class="fa-solid fa-play" style="font-size:0.85rem;"></i>
+          </div>
+        </div>
+        <h3 class="fw-bold mb-0">{{ total_videos }}</h3>
+        <small class="text-muted">{{ total_albums }} Photo albums</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Scorer Assignment Panel -->
+    <div class="col-12">
+      <div class="content-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-user-pen me-2 text-accent"></i>Assign Scorers to Matches</h6>
+          <span class="text-muted small">Only assigned scorers can open live scoring consoles.</span>
+        </div>
+        <form method="post" action="{% url 'dashboard:assign_scorers' %}" id="scorerAssignmentForm">
+          {% csrf_token %}
+          <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+              <label class="form-label small fw-semibold">Match</label>
+              {{ scorer_assignment_form.match }}
+            </div>
+            <div class="col-md-5">
+              <label class="form-label small fw-semibold">Scorers</label>
+              {{ scorer_assignment_form.scorers }}
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-emerald w-100" type="submit">Assign</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Chart & Quick Operations -->
+  <div class="row g-4 mb-4">
+    <!-- Match Format Chart -->
+    <div class="col-lg-5">
+      <div class="content-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h6 class="fw-bold mb-0">Matches by Cricket Format</h6>
+          <span class="badge bg-subtle text-muted">Distribution</span>
+        </div>
+        <div style="height: 230px; position: relative;">
+          <canvas id="matchFormatChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Operations -->
+    <div class="col-lg-7">
+      <div class="content-card p-4 h-100">
+        <h6 class="fw-bold mb-3">Quick Management Shortcuts</h6>
+        <div class="row g-2">
+          <div class="col-sm-6">
+            <a href="{% url 'dashboard:local_management' entity='match' %}" class="d-flex align-items-center gap-3 p-3 bg-subtle rounded-3 text-decoration-none text-main h-100 border transition-lift">
+              <i class="fa-solid fa-circle-plus text-emerald fs-3"></i>
+              <div>
+                <div class="fw-bold small">Add Match</div>
+                <div class="text-muted" style="font-size:0.75rem;">Create bilateral or tournament fixture</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-6">
+            <a href="/admin/news/newsarticle/add/" target="_blank" class="d-flex align-items-center gap-3 p-3 bg-subtle rounded-3 text-decoration-none text-main h-100 border transition-lift">
+              <i class="fa-solid fa-pen-nib text-primary fs-3"></i>
+              <div>
+                <div class="fw-bold small">Publish Cricket News</div>
+                <div class="text-muted" style="font-size:0.75rem;">Write breaking or analysis article</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-6">
+            <a href="/admin/videos/cricketvideo/add/" target="_blank" class="d-flex align-items-center gap-3 p-3 bg-subtle rounded-3 text-decoration-none text-main h-100 border transition-lift">
+              <i class="fa-solid fa-video text-danger fs-3"></i>
+              <div>
+                <div class="fw-bold small">Upload Match Video</div>
+                <div class="text-muted" style="font-size:0.75rem;">Embed highlights or press conference</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-6">
+            <a href="{% url 'dashboard:local_management' entity='player' %}" class="d-flex align-items-center gap-3 p-3 bg-subtle rounded-3 text-decoration-none text-main h-100 border transition-lift">
+              <i class="fa-solid fa-user-plus text-warning fs-3"></i>
+              <div>
+                <div class="fw-bold small">Add Player</div>
+                <div class="text-muted" style="font-size:0.75rem;">Register player stats & team assignment</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-6"><a href="{% url 'dashboard:local_management' entity='team' %}" class="d-flex align-items-center gap-3 p-3 bg-subtle rounded-3 text-decoration-none text-main h-100 border transition-lift"><i class="fa-solid fa-shield-halved text-emerald fs-3"></i><div><div class="fw-bold small">Add Team</div><div class="text-muted" style="font-size:.75rem;">Manage local team records</div></div></a></div>
+          <div class="col-sm-6"><a href="{% url 'dashboard:local_management' entity='tournament' %}" class="d-flex align-items-center gap-3 p-3 bg-subtle rounded-3 text-decoration-none text-main h-100 border transition-lift"><i class="fa-solid fa-trophy text-warning fs-3"></i><div><div class="fw-bold small">Add Tournament</div><div class="text-muted" style="font-size:.75rem;">Create local competitions</div></div></a></div>
+          <div class="col-sm-6"><a href="{% url 'dashboard:local_management' entity='ground' %}" class="d-flex align-items-center gap-3 p-3 bg-subtle rounded-3 text-decoration-none text-main h-100 border transition-lift"><i class="fa-solid fa-location-dot text-primary fs-3"></i><div><div class="fw-bold small">Add Ground</div><div class="text-muted" style="font-size:.75rem;">Manage match venues</div></div></a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables: Latest Registrations & Recent Comments -->
+  <div class="row g-4">
+    <!-- Latest Registrations -->
+    <div class="col-lg-6">
+      <div class="content-card overflow-hidden">
+        <div class="card-header-clean bg-subtle">
+          <h6 class="mb-0 fw-bold">Recent Registrations</h6>
+          <a href="/admin/accounts/customuser/" target="_blank" class="small text-decoration-none text-emerald fw-semibold">View All</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table sports-table mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="text-end">Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in latest_users %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <img src="{{ u.get_avatar_url }}" alt="" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;">
+                      <div class="text-truncate" style="max-width:140px;">
+                        <div class="fw-semibold text-truncate">{{ u.get_full_name|default:u.username }}</div>
+                        <div class="text-muted" style="font-size:0.72rem;">{{ u.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark border small">{{ u.get_role_display|default:"User" }}</span>
+                  </td>
+                  <td class="text-end text-muted font-monospace small">
+                    {{ u.created_at|date:"M d, H:i" }}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No users registered yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Comments & Discussion Moderation -->
+    <div class="col-lg-6">
+      <div class="content-card overflow-hidden">
+        <div class="card-header-clean bg-subtle">
+          <h6 class="mb-0 fw-bold">Latest Fan Comments</h6>
+          <a href="/admin/news/articlecomment/" target="_blank" class="small text-decoration-none text-emerald fw-semibold">Moderate</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table sports-table mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Author</th>
+                <th>Comment</th>
+                <th class="text-end">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for comment in recent_comments %}
+                <tr>
+                  <td>
+                    <span class="fw-semibold">{{ comment.user.username }}</span>
+                    <small class="d-block text-muted text-truncate" style="max-width:120px;">{{ comment.article.title }}</small>
+                  </td>
+                  <td>
+                    <div class="text-truncate text-secondary" style="max-width: 220px;" title="{{ comment.content }}">
+                      {{ comment.content }}
+                    </div>
+                  </td>
+                  <td class="text-end text-muted font-monospace small">
+                    {{ comment.created_at|date:"M d, H:i" }}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-3">No user comments posted yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('matchFormatChart');
+    if (ctx) {
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Local T20', 'Local One-Day', 'Local Test'],
+          datasets: [{
+            data: [
+              {{ match_format_counts.T20 }},
+              {{ match_format_counts.ODI }},
+              {{ match_format_counts.TEST }}
+            ],
+            backgroundColor: ['#F7E7CE', '#F7E7CE', '#D8A7B1'],
+            borderWidth: 2,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { size: 11 } }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+    
+    // Scorer Assignment Form Handler
+    const scorerForm = document.getElementById('scorerAssignmentForm');
+    if (scorerForm) {
+      scorerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(scorerForm);
+        const submitBtn = scorerForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Assigning...';
+        
+        try {
+          const response = await fetch('{% url "dashboard:assign_scorers" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Show success message
+            if (window.showToast) {
+              window.showToast('Scorer assigned successfully.', 'success');
+            } else {
+              alert('Scorer assigned successfully.');
+            }
+            
+            // Redirect to match details page if match slug is available
+            if (data.match_slug) {
+              const matchDetailUrl = "/matches/" + encodeURIComponent(data.match_slug) + "/";
+              window.location.href = matchDetailUrl;
+            } else {
+              // Fallback to admin dashboard
+              window.location.href = '{% url "dashboard:admin_dashboard" %}';
+            }
+          } else {
+            // Show validation errors
+            if (window.showToast) {
+              window.showToast('Please fix the errors and try again.', 'error');
+            } else {
+              alert('Please fix the errors and try again.');
+            }
+            
+            // Display inline errors
+            let errorHtml = '<div class="alert alert-danger mt-3">';
+            for (const field in data.errors) {
+              errorHtml += `<div><strong>${field}:</strong> ${data.errors[field].join(', ')}</div>`;
+            }
+            errorHtml += '</div>';
+            
+            // Remove existing error messages
+            const existingErrors = scorerForm.querySelector('.alert');
+            if (existingErrors) {
+              existingErrors.remove();
+            }
+            
+            // Add new error message
+            scorerForm.insertAdjacentHTML('beforeend', errorHtml);
+          }
+        } catch (error) {
+          console.error('Scorer assignment error:', error);
+          if (window.showToast) {
+            window.showToast('An error occurred. Please try again.', 'error');
+          } else {
+            alert('An error occurred. Please try again.');
+          }
+        } finally {
+          // Reset button state
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

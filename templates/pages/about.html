@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us - CrickScore Live Cricket Platform{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <h2 class="fw-bold mb-3"><i class="fa-solid fa-baseball-bat-ball text-emerald me-2"></i> About CrickScore Live</h2>
+        <p class="lead text-secondary mb-4">
+          CrickScore Live is an independent, high-performance digital cricket hub engineered to deliver lightning-fast live ball-by-ball scorecards, tournament standings, analytical graphs, and trusted cricket journalism.
+        </p>
+
+        <h5 class="fw-bold text-dark mt-4 mb-2">Our Mission</h5>
+        <p class="text-main" style="line-height: 1.8;">
+          Cricket brings local communities together. CRICKBUSS provides real-time scoring, match statistics, tournament updates, and local cricket coverage on every device.
+        </p>
+
+        <h5 class="fw-bold text-dark mt-4 mb-2">Technology & Architecture</h5>
+        <p class="text-main" style="line-height: 1.8;">
+          Built on modern clean architecture using Django, Django REST Framework, Django Channels (WebSockets), Redis caching, and Chart.js, our platform is engineered from the ground up to scale reliably under heavy live match traffic spikes.
+        </p>
+
+        <div class="row g-3 mt-3 text-center">
+          <div class="col-md-4">
+            <div class="p-3 bg-subtle rounded-3">
+              <div class="fs-4 fw-bold text-emerald">100+</div>
+              <span class="small text-muted">Countries Covered</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-subtle rounded-3">
+              <div class="fs-4 fw-bold text-warning">&lt; 1s</div>
+              <span class="small text-muted">Score Latency</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-subtle rounded-3">
+              <div class="fs-4 fw-bold text-info">24 / 7</div>
+              <span class="small text-muted">Live Match Feeds</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

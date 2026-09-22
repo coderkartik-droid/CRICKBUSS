@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Scorer Console: {{ match.title }} - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Top Navigation & Match Title -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <a href="{% url 'matches:match_detail' slug=match.slug %}"
+           class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+          <i class="fa-solid fa-arrow-left me-1"></i> Public Match Center
+        </a>
+        <span class="badge bg-danger rounded-pill px-3 py-1 font-monospace">OFFICIAL SCORER CONSOLE</span>
+      </div>
+      <h4 class="fw-bold mb-0 text-main">{{ match.title }}</h4>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 font-monospace">
+        <i class="fa-solid fa-tower-broadcast me-1"></i> WebSocket Live Sync
+      </span>
+    </div>
+  </div>
+
+  <!-- Real-time Score Billboard -->
+  <div class="content-card p-4 mb-4 bg-dark text-white border-0 shadow-lg">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="text-secondary small text-uppercase font-monospace mb-1">Active Batting Innings</div>
+        <h2 class="fw-bold mb-1 text-light">
+          <span id="billboardTeam">{{ current_inn.batting_team.name|default:"TBD" }}</span>
+          <span class="text-warning ms-2" id="billboardScore">{{ current_inn.runs|default:0 }}/{{ current_inn.wickets|default:0 }}</span>
+        </h2>
+        <div class="text-secondary small">
+          Overs: <span class="text-light fw-bold font-monospace" id="billboardOvers">{{ current_inn.overs_formatted|default:"0.0" }}</span> &bull;
+          CRR: <span class="text-emerald fw-bold font-monospace" id="billboardCRR">{{ current_inn.current_run_rate|default:"0.0" }}</span>
+        </div>
+      </div>
+      <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <div class="text-secondary small font-monospace">Last Ball Broadcast:</div>
+        <div class="fs-6 fw-semibold text-warning" id="lastBallFeedback">
+          {% if recent_deliveries.first %}
+            Over {{ recent_deliveries.first.over_number }}.{{ recent_deliveries.first.ball_number }}: {{ recent_deliveries.first.commentary }}
+          {% else %}
+            Match ready. Log first ball delivery below.
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scorer Interactive Control Grid -->
+  <div class="row g-4">
+    <!-- Main Ball-by-Ball Keypad -->
+    <div class="col-lg-8">
+      <div class="content-card p-4 mb-4">
+        <h5 class="fw-bold mb-3 border-bottom pb-2">Ball-by-Ball Scoring Engine</h5>
+
+        <!-- Crease Selection (Batter & Bowler) -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small text-muted">Striker at Crease ({{ current_inn.batting_team.short_name|default:"Batting Team" }})</label>
+            <select id="strikerSelect" class="form-select form-select-sm">
+              {% for p in batting_team_players %}
+                <option value="{{ p.id }}" {% if forloop.first %}selected{% endif %}>{{ p.name }} ({{ current_inn.batting_team.short_name|default:"BAT" }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small text-muted">Active Bowler ({{ current_inn.bowling_team.short_name|default:"Bowling Team" }})</label>
+            <select id="bowlerSelect" class="form-select form-select-sm">
+              {% for p in bowling_team_players %}
+                <option value="{{ p.id }}" {% if forloop.first %}selected{% endif %}>{{ p.name }} ({{ current_inn.bowling_team.short_name|default:"BWL" }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick Runs Keypad -->
+        <label class="form-label fw-semibold small text-muted mb-2">Runs off Bat</label>
+        <div class="scorer-keypad mb-4">
+          <button type="button" class="btn btn-outline-secondary fw-bold run-btn" data-runs="0">0</button>
+          <button type="button" class="btn btn-outline-secondary fw-bold run-btn" data-runs="1">1</button>
+          <button type="button" class="btn btn-outline-secondary fw-bold run-btn" data-runs="2">2</button>
+          <button type="button" class="btn btn-outline-secondary fw-bold run-btn" data-runs="3">3</button>
+          <button type="button" class="btn btn-primary fw-bold run-btn" data-runs="4">4</button>
+          <button type="button" class="btn btn-warning text-dark fw-bold run-btn" data-runs="6">6</button>
+          <button type="button" class="btn btn-danger fw-bold" id="wicketBtn">Wicket</button>
+        </div>
+
+        <!-- Extras Toggles -->
+        <label class="form-label fw-semibold small text-muted mb-2">Extras / Special Delivery</label>
+        <div class="d-flex flex-wrap gap-3 mb-4 align-items-center">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="extra_type" id="extraNone" value="none" checked>
+            <label class="form-check-label small" for="extraNone">Legal Ball</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="extra_type" id="extraWide" value="wide">
+            <label class="form-check-label small text-warning fw-semibold" for="extraWide">Wide (+1 Run)</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="extra_type" id="extraNoBall" value="no_ball">
+            <label class="form-check-label small text-warning fw-semibold" for="extraNoBall">No Ball (+1 Run)</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="extra_type" id="extraBye" value="bye">
+            <label class="form-check-label small" for="extraBye">Bye</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="extra_type" id="extraLegBye" value="leg_bye">
+            <label class="form-check-label small" for="extraLegBye">Leg Bye</label>
+          </div>
+        </div>
+
+        <!-- Custom Commentary Input -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold small text-muted">Ball Commentary Description (Optional)</label>
+          <input type="text" id="customCommentaryInput" class="form-control"
+                 placeholder="e.g. Driven stylishly through cover point for four!">
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 mb-4">
+          <button type="button" id="submitBallBtn" class="btn btn-success w-100">Log Delivery</button>
+          <button type="button" id="updateLastBtn" class="btn btn-outline-primary">
+            <i class="fa-solid fa-pen-to-square me-1"></i> Update Last
+          </button>
+          <button type="button" id="undoBallBtn" class="btn btn-outline-danger">
+            <i class="fa-solid fa-rotate-left me-1"></i> Undo
+          </button>
+        </div>
+
+        <!-- Recent Balls Feed Table -->
+        <div class="content-card p-4">
+          <h6 class="fw-bold mb-3">Recently Logged Deliveries</h6>
+          <div class="table-responsive">
+            <table class="table sports-table small mb-0" id="recentBallsTable">
+              <thead>
+                <tr>
+                  <th>Over</th>
+                  <th>Score</th>
+                  <th>Commentary</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for b in recent_deliveries %}
+                  <tr>
+                    <td class="font-monospace fw-bold">{{ b.over_number }}.{{ b.ball_number }}</td>
+                    <td>
+                      <span class="ball-bubble {% if b.is_wicket %}wicket{% elif b.is_four %}four{% elif b.is_six %}six{% endif %}">
+                        {% if b.is_wicket %}W{% elif b.is_four %}4{% elif b.is_six %}6{% else %}{{ b.runs_off_bat }}{% endif %}
+                      </span>
+                    </td>
+                    <td class="text-secondary">{{ b.commentary }}</td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-3">No deliveries recorded in this session yet.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Column: Toss, Officials & Match Result -->
+    <div class="col-lg-4">
+      <!-- Toss Management Card -->
+      <div class="content-card p-4 mb-4">
+        <h6 class="fw-bold mb-3 border-bottom pb-2">Toss Operations</h6>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small text-muted">Toss Winner</label>
+          <select id="tossWinnerSelect" class="form-select form-select-sm">
+            <option value="{{ match.team1.id }}" {% if match.toss_winner.pk == match.team1.pk %}selected{% endif %}>{{ match.team1.name }}</option>
+            <option value="{{ match.team2.id }}" {% if match.toss_winner.pk == match.team2.pk %}selected{% endif %}>{{ match.team2.name }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small text-muted">Toss Decision</label>
+          <select id="tossDecisionSelect" class="form-select form-select-sm">
+            <option value="bat" {% if match.toss_decision == 'bat' %}selected{% endif %}>Elected to Bat First</option>
+            <option value="bowl" {% if match.toss_decision == 'bowl' %}selected{% endif %}>Elected to Bowl First</option>
+          </select>
+        </div>
+        <button type="button" id="updateTossBtn" class="btn btn-outline-emerald btn-sm w-100">
+          <i class="fa-solid fa-coins me-1"></i> Update Toss Details
+        </button>
+      </div>
+
+      <!-- Conclude Match & Set Result Card -->
+      <div class="content-card p-4">
+        <h6 class="fw-bold mb-3 border-bottom pb-2 text-danger">Match Outcome & Result</h6>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small text-muted">Official Result Text</label>
+          <input type="text" id="resultTextInput" class="form-control form-control-sm" value="{{ match.result_text }}"
+                 placeholder="e.g. India won by 6 wickets">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small text-muted">Winning Team</label>
+          <select id="winningTeamSelect" class="form-select form-select-sm">
+            <option value="">-- No Winner (Draw / Tie / Abandoned) --</option>
+            <option value="{{ match.team1.id }}" {% if match.winning_team.pk == match.team1.pk %}selected{% endif %}>{{ match.team1.name }}</option>
+            <option value="{{ match.team2.id }}" {% if match.winning_team.pk == match.team2.pk %}selected{% endif %}>{{ match.team2.name }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold small text-muted">Player of the Match</label>
+          <select id="momSelect" class="form-select form-select-sm">
+            <option value="">-- Select Player --</option>
+            {% for p in team1_players %}
+              <option value="{{ p.id }}" {% if match.man_of_match.pk == p.pk %}selected{% endif %}>{{ p.name }} ({{ match.team1.short_name }})</option>
+            {% endfor %}
+            {% for p in team2_players %}
+              <option value="{{ p.id }}" {% if match.man_of_match.pk == p.pk %}selected{% endif %}>{{ p.name }} ({{ match.team2.short_name }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="button" id="concludeMatchBtn" class="btn btn-danger btn-sm w-100 fw-bold">
+          <i class="fa-solid fa-trophy me-1"></i> Finalize Match Result
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const actionUrl = "{% url 'matches:match_scorer_action' slug=match.slug %}";
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}';
+
+    function resetScoringState() {
+      document.querySelectorAll('.run-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('wicketBtn')?.classList.remove('active');
+      const extraNone = document.getElementById('extraNone');
+      if (extraNone) extraNone.checked = true;
+      const commentaryInput = document.getElementById('customCommentaryInput');
+      if (commentaryInput) commentaryInput.value = '';
+      document.querySelector('.run-btn[data-runs="0"]')?.classList.add('active');
+    }
+
+    async function sendScorerAction(formData) {
+      try {
+        const res = await fetch(actionUrl, { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          if (window.showToast) window.showToast(data.message || 'Action successful!', 'success');
+          updateUI(data);
+        } else {
+          if (window.showToast) window.showToast(data.message || 'An error occurred.', 'danger');
+        }
+        return data;
+      } catch (err) {
+        console.error('Scorer Action Error:', err);
+        if (window.showToast) window.showToast('A network error occurred.', 'danger');
+        return null;
+      }
+    }
+
+    function updateUI(payload) {
+      if (!payload) return;
+      if (payload.runs !== undefined && payload.wickets !== undefined) {
+        document.getElementById('billboardScore').textContent = `${payload.runs}/${payload.wickets}`;
+      }
+      if (payload.overs) document.getElementById('billboardOvers').textContent = payload.overs;
+      if (payload.crr) document.getElementById('billboardCRR').textContent = payload.crr;
+      if (payload.last_ball && payload.last_ball.over !== undefined) {
+        document.getElementById('lastBallFeedback').textContent = `Over ${payload.last_ball.over}.${payload.last_ball.ball}: ${payload.last_ball.commentary}`;
+      } else if (payload.commentary) {
+        document.getElementById('lastBallFeedback').textContent = payload.commentary;
+      }
+    }
+
+    function buildBallFormData(actionName) {
+      const fd = new FormData();
+      fd.append('action', actionName);
+      fd.append('csrfmiddlewaretoken', csrf);
+      const activeRunBtn = document.querySelector('.run-btn.active');
+      fd.append('runs_off_bat', activeRunBtn ? activeRunBtn.dataset.runs : '0');
+      const extraRadio = document.querySelector('input[name="extra_type"]:checked');
+      const extraVal = extraRadio ? extraRadio.value : 'none';
+      fd.append('extra_type', extraVal === 'none' ? '' : extraVal);
+      fd.append('is_wicket', document.getElementById('wicketBtn').classList.contains('active'));
+      fd.append('commentary', document.getElementById('customCommentaryInput').value);
+      fd.append('batter_id', document.getElementById('strikerSelect').value);
+      fd.append('bowler_id', document.getElementById('bowlerSelect').value);
+      return fd;
+    }
+
+    document.getElementById('submitBallBtn')?.addEventListener('click', async () => {
+      const fd = buildBallFormData('record_ball');
+      const result = await sendScorerAction(fd);
+      if (result && result.success) {
+        resetScoringState();
+      }
+    });
+
+    document.getElementById('updateLastBtn')?.addEventListener('click', async () => {
+      if (!confirm('Update the last recorded delivery with the current selections?')) return;
+      const fd = buildBallFormData('update_last_delivery');
+      await sendScorerAction(fd);
+    });
+
+    document.getElementById('undoBallBtn')?.addEventListener('click', () => {
+      if (confirm('Are you sure you want to undo the last recorded delivery?')) {
+        const fd = new FormData();
+        fd.append('action', 'undo_last_ball');
+        fd.append('csrfmiddlewaretoken', csrf);
+        sendScorerAction(fd);
+      }
+    });
+
+    document.getElementById('updateTossBtn')?.addEventListener('click', () => {
+      const fd = new FormData();
+      fd.append('action', 'update_toss');
+      fd.append('csrfmiddlewaretoken', csrf);
+      fd.append('toss_winner_id', document.getElementById('tossWinnerSelect').value);
+      fd.append('toss_decision', document.getElementById('tossDecisionSelect').value);
+      sendScorerAction(fd);
+    });
+
+    document.getElementById('concludeMatchBtn')?.addEventListener('click', () => {
+      if (!confirm('Are you sure you want to finalize this match as completed? This action cannot be undone.')) return;
+      const fd = new FormData();
+      fd.append('action', 'set_result');
+      fd.append('csrfmiddlewaretoken', csrf);
+      fd.append('result_text', document.getElementById('resultTextInput').value);
+      fd.append('winning_team_id', document.getElementById('winningTeamSelect').value);
+      fd.append('man_of_match_id', document.getElementById('momSelect').value);
+      sendScorerAction(fd);
+    });
+
+    document.querySelectorAll('.run-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.run-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('wicketBtn')?.classList.remove('active');
+      });
+    });
+
+    document.getElementById('wicketBtn')?.addEventListener('click', () => {
+      const wicketBtn = document.getElementById('wicketBtn');
+      wicketBtn.classList.toggle('active');
+      if (wicketBtn.classList.contains('active')) {
+        document.querySelectorAll('.run-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.run-btn[data-runs="0"]')?.classList.add('active');
+      }
+    });
+
+    document.querySelector('.run-btn[data-runs="0"]')?.classList.add('active');
+  });
+</script>
+{% endblock %}

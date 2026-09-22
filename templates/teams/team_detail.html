@@ -1,0 +1,158 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{{ team.name }} Cricket Team - Squad, Stats, Records & Fixtures - CrickScore Live{% endblock %}
+
+{% block content %}
+<!-- Team Header Banner -->
+<section class="bg-dark text-white py-4 border-bottom border-secondary border-opacity-25" style="border-top: 4px solid var(--champagne);">
+  <div class="container">
+    <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+      <img src="{{ team.get_logo_url }}" alt="{{ team.name }}" class="rounded-circle border border-2 border-white shadow" style="width: 100px; height: 100px; object-fit: cover;">
+      <div class="text-center text-md-start">
+        <span class="badge bg-emerald mb-2 text-uppercase">{{ team.get_team_type_display }}</span>
+        <h2 class="fw-bold mb-1">{{ team.name }} ({{ team.short_name }})</h2>
+        <div class="text-secondary small d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+          <span><i class="fa-solid fa-flag me-1 text-warning"></i> {{ team.country }}</span>
+          <span><i class="fa-solid fa-user-shield me-1 text-emerald"></i> Captain: <strong>{{ team.captain_name|default:"TBA" }}</strong></span>
+          <span><i class="fa-solid fa-clipboard-user me-1 text-info"></i> Head Coach: <strong>{{ team.coach_name|default:"TBA" }}</strong></span>
+          <span><i class="fa-solid fa-landmark me-1 text-secondary"></i> Home: {{ team.home_venue|default:"National Stadium" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Team Details Tabs -->
+<div class="container py-4">
+  <ul class="nav nav-tabs mb-4" id="teamTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active fw-bold" id="squad-tab" data-bs-toggle="tab" data-bs-target="#squad" type="button">Squad / Players</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold" id="fixtures-tab" data-bs-toggle="tab" data-bs-target="#fixtures" type="button">Fixtures & Results</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">Stats & Overview</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button">History & Records</button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="teamTabsContent">
+    <!-- SQUAD TAB -->
+    <div class="tab-pane fade show active" id="squad" role="tabpanel">
+      <div class="row g-3">
+        {% for player in squad_players %}
+          <div class="col-lg-3 col-md-4 col-sm-6">
+            <a href="{{ player.get_absolute_url }}" class="text-decoration-none text-reset">
+              <div class="card border-0 shadow-sm rounded-3 p-3 text-center h-100 content-card">
+                <img src="{{ player.get_image_url }}" alt="{{ player.name }}" class="rounded-circle mx-auto mb-2 border" style="width: 70px; height: 70px; object-fit: cover;">
+                <h6 class="fw-bold mb-1">{{ player.name }}</h6>
+                <span class="badge bg-light text-dark border small mb-1">{{ player.get_role_display }}</span>
+                <small class="text-muted d-block">{{ player.get_batting_style_display }}</small>
+              </div>
+            </a>
+          </div>
+        {% empty %}
+          <div class="col-12 py-5 text-center text-muted">
+            <p>Squad players have not been linked to this team yet.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- FIXTURES & RESULTS TAB -->
+    <div class="tab-pane fade" id="fixtures" role="tabpanel">
+      <h5 class="fw-bold mb-3">Upcoming Matches</h5>
+      <div class="row g-3 mb-4">
+        {% for match in upcoming_matches %}
+          <div class="col-md-6">
+            <div class="match-card">
+              <div class="d-flex justify-content-between text-muted small mb-2">
+                <span>{{ match.match_type }} &bull; {{ match.match_number }}</span>
+                <span>{{ match.start_datetime|date:"d M Y, H:i" }}</span>
+              </div>
+              <div class="team-row">
+                <div class="team-info">
+                  <img src="{{ match.team1.get_logo_url }}" alt="" class="team-logo-sm">
+                  <span class="fw-bold">{{ match.team1.name }}</span>
+                </div>
+              </div>
+              <div class="team-row">
+                <div class="team-info">
+                  <img src="{{ match.team2.get_logo_url }}" alt="" class="team-logo-sm">
+                  <span class="fw-bold">{{ match.team2.name }}</span>
+                </div>
+              </div>
+              <div class="mt-2 pt-2 border-top small text-muted">
+                Venue: {{ match.venue.name|default:"TBD" }}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12 text-muted small">No upcoming scheduled matches found.</div>
+        {% endfor %}
+      </div>
+
+      <h5 class="fw-bold mb-3">Recent Results</h5>
+      <div class="row g-3">
+        {% for match in recent_matches %}
+          <div class="col-md-6">
+            <div class="match-card">
+              <div class="d-flex justify-content-between text-muted small mb-2">
+                <span>{{ match.match_type }}</span>
+                <span class="badge bg-success">Completed</span>
+              </div>
+              <div class="team-row">
+                <div class="team-info"><span class="fw-bold">{{ match.team1.name }}</span></div>
+              </div>
+              <div class="team-row">
+                <div class="team-info"><span class="fw-bold">{{ match.team2.name }}</span></div>
+              </div>
+              <div class="mt-2 pt-2 border-top text-emerald fw-semibold small">
+                {{ match.result_text }}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12 text-muted small">No recent results recorded.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div class="tab-pane fade" id="stats" role="tabpanel">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm rounded-3 p-4">
+            <h5 class="fw-bold mb-3">All-Time Match Win/Loss Summary</h5>
+            <table class="table table-borderless mb-0">
+              <tr><td>Total Matches Played:</td><td class="fw-bold">{{ team.total_matches }}</td></tr>
+              <tr><td>Matches Won:</td><td class="fw-bold text-success">{{ team.total_wins }}</td></tr>
+              <tr><td>Matches Lost:</td><td class="fw-bold text-danger">{{ team.total_losses }}</td></tr>
+              <tr><td>Ties / Draws / No Result:</td><td class="fw-bold text-muted">{{ team.total_ties_draws }}</td></tr>
+              <tr><td>Win Percentage:</td><td class="fw-bold text-emerald fs-5">{{ team.win_percentage }}%</td></tr>
+              <tr><td>Major Trophies Won:</td><td class="fw-bold text-warning">{{ team.trophies_count }}</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY & RECORDS TAB -->
+    <div class="tab-pane fade" id="history" role="tabpanel">
+      <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
+        <h5 class="fw-bold mb-3">Team History</h5>
+        <p class="text-main mb-0" style="white-space: pre-line;">{{ team.history|default:"Team history and background narrative will appear here." }}</p>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-3 p-4">
+        <h5 class="fw-bold mb-3">Notable Records & Milestones</h5>
+        <p class="text-main mb-0" style="white-space: pre-line;">{{ team.records|default:"Team trophies, tournament victories, and records will appear here." }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,5 @@
+Matches: 1
+Teams: 2
+Players: 22
+  Royal Warriors vs Thunder Kings - Match 2 | slug=rw-vs-tk-match-2-t20 | status=live | RW vs TK | [Inn1:RW, Inn2:TK]
+Using LIVE match: rw-vs-tk-match-2-t20

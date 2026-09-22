@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Local Cricket Rankings - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="mb-4 pb-3 border-bottom">
+    <h3 class="fw-bold mb-1">Local Cricket Rankings</h3>
+    <p class="text-muted small mb-0">Local standings for teams, batters, bowlers, and all-rounders.</p>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4 p-3 bg-subtle">
+    <form method="GET" class="row g-3 align-items-center">
+      <!-- Gender Filter -->
+      <div class="col-md-4">
+        <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Group</label>
+        <div class="btn-group w-100" role="group">
+          <a href="?gender=men&format={{ current_format }}&category={{ current_category }}" class="btn btn-sm {% if current_gender == 'men' %}btn-emerald{% else %}btn-outline-secondary{% endif %}">
+            <i class="fa-solid fa-person me-1"></i> Open
+          </a>
+          <a href="?gender=women&format={{ current_format }}&category={{ current_category }}" class="btn btn-sm {% if current_gender == 'women' %}btn-emerald{% else %}btn-outline-secondary{% endif %}">
+            <i class="fa-solid fa-people-group me-1"></i> Community
+          </a>
+        </div>
+      </div>
+
+      <!-- Format Filter -->
+      <div class="col-md-4">
+        <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Format</label>
+        <div class="btn-group w-100" role="group">
+          <a href="?gender={{ current_gender }}&format=TEST&category={{ current_category }}" class="btn btn-sm {% if current_format == 'TEST' %}btn-emerald{% else %}btn-outline-secondary{% endif %}">TEST</a>
+          <a href="?gender={{ current_gender }}&format=ODI&category={{ current_category }}" class="btn btn-sm {% if current_format == 'ODI' %}btn-emerald{% else %}btn-outline-secondary{% endif %}">ODI</a>
+          <a href="?gender={{ current_gender }}&format=T20I&category={{ current_category }}" class="btn btn-sm {% if current_format == 'T20I' %}btn-emerald{% else %}btn-outline-secondary{% endif %}">T20I</a>
+        </div>
+      </div>
+
+      <!-- Discipline Filter -->
+      <div class="col-md-4">
+        <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Discipline</label>
+        <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="batters" {% if current_category == 'batters' %}selected{% endif %}>Batting Rankings</option>
+          <option value="bowlers" {% if current_category == 'bowlers' %}selected{% endif %}>Bowling Rankings</option>
+          <option value="all_rounders" {% if current_category == 'all_rounders' %}selected{% endif %}>All-Rounders Rankings</option>
+          <option value="teams" {% if current_category == 'teams' %}selected{% endif %}>Team Standings</option>
+        </select>
+        <input type="hidden" name="gender" value="{{ current_gender }}">
+        <input type="hidden" name="format" value="{{ current_format }}">
+      </div>
+    </form>
+  </div>
+
+  <!-- Rankings Table -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+      <h6 class="mb-0 fw-bold">
+        Local {{ current_format }} {{ current_category|title }} Rankings
+      </h6>
+      <span class="badge bg-emerald">Official Rating</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light small">
+          <tr>
+            <th class="ps-3" style="width: 8%;">Rank</th>
+            <th style="width: 45%;">Name</th>
+            <th>Team</th>
+            <th class="text-center">Trend</th>
+            <th class="text-end pe-3">Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rankings %}
+            <tr {% if r.rank <= 3 %}class="table-subtle fw-semibold"{% endif %}>
+              <td class="ps-3 fw-bold">
+                {% if r.rank == 1 %}
+                  <span class="badge bg-warning text-dark rounded-circle p-2" style="width:28px;height:28px;"><i class="fa-solid fa-crown"></i></span>
+                {% else %}
+                  <span class="fs-6">{{ r.rank }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if r.player %}
+                  <a href="{{ r.player.get_absolute_url }}" class="fw-bold text-reset text-decoration-none d-flex align-items-center gap-2">
+                    <img src="{{ r.player.get_image_url }}" alt="" class="rounded-circle border flex-shrink-0" style="width:34px;height:34px;object-fit:cover;">
+                    <span class="text-break">{{ r.name }}</span>
+                  </a>
+                {% elif r.team %}
+                  <a href="{{ r.team.get_absolute_url }}" class="fw-bold text-reset text-decoration-none d-flex align-items-center gap-2">
+                    <img src="{{ r.team.get_logo_url }}" alt="" class="rounded-circle border flex-shrink-0" style="width:34px;height:34px;object-fit:cover;">
+                    <span class="text-break">{{ r.name }}</span>
+                  </a>
+                {% else %}
+                  <span class="fw-bold">{{ r.name }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ r.country }}</span>
+              </td>
+              <td class="text-center font-monospace">
+                {% if r.trend == 'up' %}
+                  <span class="text-success small"><i class="fa-solid fa-arrow-up me-1"></i> {{ r.previous_rank }}</span>
+                {% elif r.trend == 'down' %}
+                  <span class="text-danger small"><i class="fa-solid fa-arrow-down me-1"></i> {{ r.previous_rank }}</span>
+                {% else %}
+                  <span class="text-muted small">&bull; -</span>
+                {% endif %}
+              </td>
+              <td class="text-end pe-3 fw-bold fs-6 text-emerald">
+                {{ r.rating }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="py-5 text-center text-muted">
+                <div><i class="fa-solid fa-trophy fs-1 mb-2 text-secondary"></i></div>
+                <p>No ranking entries currently stored for this selection.</p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

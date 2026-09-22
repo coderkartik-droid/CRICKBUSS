@@ -1,0 +1,130 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}User Dashboard - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Profile Summary Header -->
+  <div class="content-card p-4 mb-4" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--bg-dark) 100%); color: var(--pearl-white);">
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3 min-w-0">
+        <img src="{{ user.get_avatar_url }}" alt="Avatar" class="rounded-circle flex-shrink-0" style="width: 72px; height: 72px; object-fit: cover; border: 3px solid var(--primary);">
+        <div class="min-w-0">
+          <span class="badge badge-premium mb-1 text-uppercase">{{ user.get_role_display }}</span>
+          <h4 class="fw-bold mb-0 text-light text-truncate">{{ user.get_full_name }}</h4>
+          <span class="text-secondary small text-truncate d-block">{{ user.email }}</span>
+        </div>
+      </div>
+      <div class="d-flex flex-column flex-sm-row flex-wrap gap-2 justify-content-md-end flex-shrink-0">
+        <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-ghost rounded-pill px-3" style="border-color: color-mix(in srgb, var(--pearl-white) 30%, transparent); color: var(--pearl-white);">
+          <i class="fa-solid fa-user-pen me-1"></i> Edit Profile
+        </a>
+        <a href="{% url 'dashboard:notifications' %}" class="btn btn-sm btn-emerald rounded-pill px-3">
+          <i class="fa-solid fa-bell me-1"></i> Notification Settings
+        </a>
+      </div>
+    </div>
+    {% if user.is_superuser %}
+      <div class="content-card p-4 mt-4" style="background: color-mix(in srgb, var(--pearl-white) 8%, transparent); border-color: color-mix(in srgb, var(--pearl-white) 20%, transparent);">
+        <h5 class="fw-bold">Super Admin Operations</h5>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-sm btn-emerald" href="{% url 'dashboard:managed_users' %}?role=admin">Manage Admins</a>
+          <a class="btn btn-sm btn-outline-emerald" href="{% url 'dashboard:managed_users' %}?role=scorer">Manage Scorers</a>
+          <a class="btn btn-sm btn-outline-secondary" href="/admin/" target="_blank" rel="noopener">Django Admin</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Quick Stat Counters -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="content-card p-3 text-center">
+        <div class="fs-3 fw-bold mb-1" style="color: var(--primary);">{{ saved_matches_count }}</div>
+        <span class="text-muted small"><i class="fa-solid fa-baseball-bat-ball me-1"></i> Saved Matches</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="content-card p-3 text-center">
+        <div class="fs-3 fw-bold mb-1" style="color: var(--accent);">{{ saved_news_count }}</div>
+        <span class="text-muted small"><i class="fa-regular fa-newspaper me-1"></i> Bookmarked News</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="content-card p-3 text-center">
+        <div class="fs-3 fw-bold mb-1" style="color: var(--secondary);">{{ saved_videos_count }}</div>
+        <span class="text-muted small"><i class="fa-solid fa-video me-1"></i> Saved Videos</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="content-card p-3 text-center">
+        <div class="fs-3 fw-bold mb-1" style="color: var(--live-red);">{{ comments_count }}</div>
+        <span class="text-muted small"><i class="fa-regular fa-comments me-1"></i> My Comments</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Sections: Watchlist & Activity -->
+  <div class="row g-4">
+    <!-- Saved Matches Preview -->
+    <div class="col-lg-6">
+      <div class="content-card h-100">
+        <div class="card-header-clean">
+          <span><i class="fa-solid fa-bookmark me-2" style="color: var(--accent);"></i> Watchlist Matches</span>
+          <a href="{% url 'dashboard:saved_items' %}?tab=matches" class="small text-decoration-none fw-semibold" style="color: var(--primary);">View All &rarr;</a>
+        </div>
+        <div class="p-3">
+          {% for sm in recent_saved_matches %}
+            <div class="border-bottom py-2 d-flex justify-content-between align-items-center" style="border-color: var(--border-light);">
+              <div>
+                <a href="{% url 'matches:match_detail' slug=sm.match.slug %}" class="fw-bold text-reset text-decoration-none small">
+                  {{ sm.match.title }}
+                </a>
+                <div class="text-muted small">{{ sm.match.start_datetime|date:"d M Y, H:i" }} &bull; {{ sm.match.venue.name|default:"TBD" }}</div>
+              </div>
+              <span class="badge {% if sm.match.status == 'live' %}badge-live-custom{% else %}bg-secondary{% endif %}">
+                {{ sm.match.get_status_display }}
+              </span>
+            </div>
+          {% empty %}
+            <div class="text-muted small py-4 text-center">
+              <p>You have not saved any matches to your watchlist yet.</p>
+              <a href="{% url 'matches:match_list' %}" class="btn btn-sm btn-outline-emerald">Explore Matches</a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved News Preview -->
+    <div class="col-lg-6">
+      <div class="content-card h-100">
+        <div class="card-header-clean">
+          <span><i class="fa-regular fa-newspaper me-2" style="color: var(--primary);"></i> Bookmarked Articles</span>
+          <a href="{% url 'dashboard:saved_items' %}?tab=news" class="small text-decoration-none fw-semibold" style="color: var(--primary);">View All &rarr;</a>
+        </div>
+        <div class="p-3">
+          {% for sn in recent_saved_news %}
+            <div class="border-bottom py-2" style="border-color: var(--border-light);">
+              <a href="{{ sn.article.get_absolute_url }}" class="fw-bold text-reset text-decoration-none small">
+                {{ sn.article.title }}
+              </a>
+              <div class="text-muted small d-flex justify-content-between mt-1">
+                <span>{{ sn.article.category.name }}</span>
+                <span>Saved {{ sn.created_at|timesince }} ago</span>
+              </div>
+            </div>
+          {% empty %}
+            <div class="text-muted small py-4 text-center">
+              <p>No bookmarked news stories yet.</p>
+              <a href="{% url 'news:news_list' %}" class="btn btn-sm btn-outline-emerald">Browse News</a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

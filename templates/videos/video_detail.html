@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ video.title }} - Watch Cricket Video Highlights - CrickScore Live{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Breadcrumb -->
+  <nav class="small text-muted mb-3">
+    <a href="{% url 'home' %}" class="text-reset text-decoration-none">Home</a> &bull;
+    <a href="{% url 'videos:video_list' %}" class="text-reset text-decoration-none">Videos</a> &bull;
+    <span>{{ video.category.name }}</span>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Main Video Player & Description (8 Cols) -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+        <!-- Video Player Frame -->
+        <div class="ratio ratio-16x9 bg-black">
+          {% if 'youtube' in video.video_url or 'youtu.be' in video.video_url %}
+            <iframe src="{{ video.video_url }}" title="{{ video.title }}" allowfullscreen></iframe>
+          {% else %}
+            <video controls poster="{{ video.get_thumbnail_url }}" class="w-100 h-100">
+              <source src="{{ video.video_url }}" type="video/mp4">
+              Your browser does not support HTML5 video streaming.
+            </video>
+          {% endif %}
+        </div>
+
+        <div class="p-4">
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+            <div>
+              <span class="badge bg-emerald mb-2">{{ video.category.name }}</span>
+              <h4 class="fw-bold mb-1">{{ video.title }}</h4>
+              <div class="small text-muted">
+                <span><i class="fa-regular fa-eye me-1"></i> {{ video.views_count }} views</span> &bull;
+                <span><i class="fa-regular fa-clock me-1"></i> {{ video.created_at|date:"d M Y" }}</span>
+              </div>
+            </div>
+
+            <!-- Actions (Like & Bookmark) -->
+            <div class="d-flex gap-2">
+              <form action="{% url 'videos:toggle_like' slug=video.slug %}" method="POST" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="{% if has_liked %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %} me-1"></i>
+                  <span>{{ video.likes_count }}</span>
+                </button>
+              </form>
+              <form action="{% url 'videos:toggle_bookmark' slug=video.slug %}" method="POST" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-warning text-dark">
+                  <i class="{% if has_bookmarked %}fa-solid fa-bookmark{% else %}fa-regular fa-bookmark{% endif %}"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <hr>
+
+          <p class="text-main" style="white-space: pre-line;">{{ video.description|default:"No detailed description provided for this video highlight." }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Videos Sidebar (4 Cols) -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-subtle fw-bold py-3">More in {{ video.category.name }}</div>
+        <div class="list-group list-group-flush">
+          {% for rv in related_videos %}
+            <a href="{{ rv.get_absolute_url }}" class="list-group-item list-group-item-action p-3">
+              <div class="d-flex gap-3">
+                <div class="position-relative rounded overflow-hidden flex-shrink-0" style="width: 100px; height: 60px;">
+                  <img src="{{ rv.get_thumbnail_url }}" alt="" class="w-100 h-100 object-fit-cover">
+                  <span class="position-absolute bottom-0 end-0 bg-dark text-white px-1 font-monospace" style="font-size: 0.65rem;">{{ rv.duration }}</span>
+                </div>
+                <div>
+                  <h6 class="fw-bold small mb-1 text-truncate-2">{{ rv.title }}</h6>
+                  <div class="text-muted small" style="font-size: 0.75rem;">{{ rv.views_count }} views</div>
+                </div>
+              </div>
+            </a>
+          {% empty %}
+            <div class="p-3 text-muted small">No other videos in this category.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

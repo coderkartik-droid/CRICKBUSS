@@ -1,0 +1,480 @@
+﻿{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}CRICKBUSS - Premium Cricket Scores, Live Matches & Sports News{% endblock %}
+
+{% block content %}
+<!-- ================= PREMIUM HERO SECTION ================= -->
+<section class="hero-section">
+  <div class="container hero-content">
+    <div class="row align-items-center">
+      <div class="col-lg-6 mb-4 mb-lg-0">
+        <h1 class="hero-title fade-in">Experience Cricket<br>Like Never Before</h1>
+        <p class="hero-subtitle fade-in stagger-1">Get local cricket scores, ball-by-ball commentary, match analytics, and updates from nearby tournaments and clubs.</p>
+        <div class="d-flex gap-3 fade-in stagger-2">
+          <a href="{% url 'matches:match_list' %}?status=live" class="btn btn-emerald btn-lg">
+            <i class="fa-solid fa-circle-play me-2"></i> Watch Live
+          </a>
+          <a href="{% url 'series:series_list' %}" class="btn btn-gold btn-lg">
+            <i class="fa-solid fa-trophy me-2"></i> View Local Rankings
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="row g-3">
+          {% for match in hero_live_matches|slice:":2" %}
+            <div class="col-12">
+              <div class="live-match-card fade-in stagger-{{ forloop.counter }}">
+                <div class="live-match-card-header">
+                  <span class="text-uppercase fw-bold" style="font-size: 0.75rem;">{{ match.match_type }}</span>
+                  {% if match.status == 'live' %}
+                    <span class="badge-live"><span class="pulse-dot"></span> LIVE</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ match.start_datetime|date:"d M, H:i" }}</span>
+                  {% endif %}
+                </div>
+                <div class="team-score-row">
+                  <div class="team-info-group">
+                    <img src="{{ match.team1.get_logo_url }}" alt="{{ match.team1.name }}" class="team-logo-sm">
+                    <span class="team-name-text">{{ match.team1.short_name }}</span>
+                  </div>
+                  <div>
+                    <span class="team-runs-display">
+                      {% for inn in match.innings.all %}
+                        {% if inn.batting_team == match.team1 %}
+                          {{ inn.runs }}/{{ inn.wickets }}
+                        {% endif %}
+                      {% endfor %}
+                    </span>
+                    <span class="team-overs-display">
+                      {% for inn in match.innings.all %}
+                        {% if inn.batting_team == match.team1 %}
+                          ({{ inn.overs_formatted }})
+                        {% endif %}
+                      {% endfor %}
+                    </span>
+                  </div>
+                </div>
+                <div class="team-score-row">
+                  <div class="team-info-group">
+                    <img src="{{ match.team2.get_logo_url }}" alt="{{ match.team2.name }}" class="team-logo-sm">
+                    <span class="team-name-text">{{ match.team2.short_name }}</span>
+                  </div>
+                  <div>
+                    <span class="team-runs-display">
+                      {% for inn in match.innings.all %}
+                        {% if inn.batting_team == match.team2 %}
+                          {{ inn.runs }}/{{ inn.wickets }}
+                        {% endif %}
+                      {% endfor %}
+                    </span>
+                    <span class="team-overs-display">
+                      {% for inn in match.innings.all %}
+                        {% if inn.batting_team == match.team2 %}
+                          ({{ inn.overs_formatted }})
+                        {% endif %}
+                      {% endfor %}
+                    </span>
+                  </div>
+                </div>
+                <div class="match-status-footer">
+                  {% if match.result_text %}
+                    {{ match.result_text }}
+                  {% elif match.status == 'live' %}
+                    {% if match.current_innings %}
+                      {{ match.current_innings.batting_team.short_name }} batting â€¢ CRR: {{ match.current_innings.current_run_rate }}
+                    {% else %}
+                      Match in progress
+                    {% endif %}
+                  {% else %}
+                    Starts at {{ match.venue.name|default:"TBD" }}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="col-12">
+              <div class="live-match-card">
+                <div class="p-4 text-center">
+                  <i class="fa-solid fa-calendar-xmark fs-1 mb-2 text-muted"></i>
+                  <p class="text-muted mb-0">No live matches at the moment</p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LIVE MATCHES HUB ================= -->
+<section class="py-5 bg-main">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <h2 class="mb-0 fw-bold">Live Matches</h2>
+        <ul class="nav nav-pills bg-subtle p-1 rounded-pill" id="matchHubTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active rounded-pill py-1 px-3 small fw-semibold" id="tab-local-tab" data-bs-toggle="pill" data-bs-target="#tab-local" type="button" role="tab">
+              <span class="pulse-dot me-1"></span> Local
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="d-flex gap-2">
+        {% if user.is_authenticated and user.is_superuser or user.is_authenticated and user.role == 'admin' %}
+          <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-sm btn-gold rounded-pill px-3">
+            <i class="fa-solid fa-gauge me-1"></i> Admin Portal
+          </a>
+        {% endif %}
+        <a href="{% url 'matches:match_list' %}" class="btn btn-sm btn-outline-emerald rounded-pill px-3">View All &rarr;</a>
+      </div>
+    </div>
+
+    <div class="tab-content" id="matchHubContent">
+      <!-- Local / Database Matches Tab -->
+      <div class="tab-pane fade show active" id="tab-local" role="tabpanel">
+        <div class="row g-3">
+          {% for match in hero_live_matches %}
+            <div class="col-lg-3 col-md-6">
+              <div class="match-card {% if match.status == 'live' %}is-live{% endif %}">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-dark border border-secondary text-light text-uppercase font-monospace" style="font-size: 0.7rem;">
+                      {{ match.match_type }} â€¢ {{ match.match_number }}
+                    </span>
+                    {% if match.status == 'live' %}
+                      <span class="badge-live"><span class="pulse-dot"></span> LIVE</span>
+                    {% elif match.status == 'upcoming' %}
+                      <span class="badge bg-secondary text-light">{{ match.start_datetime|date:"d M, H:i" }}</span>
+                    {% else %}
+                      <span class="badge bg-success">Completed</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Team 1 -->
+                  <div class="team-row">
+                    <div class="team-info">
+                      <img src="{{ match.team1.get_logo_url }}" alt="{{ match.team1.name }}" class="team-logo-sm">
+                      <span class="fw-bold">{{ match.team1.short_name }}</span>
+                    </div>
+                    <div class="team-score">
+                      {% for inn in match.innings.all %}
+                        {% if inn.batting_team == match.team1 %}
+                          {{ inn.runs }}/{{ inn.wickets }} <span class="team-overs">({{ inn.overs_formatted }})</span>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                  <!-- Team 2 -->
+                  <div class="team-row">
+                    <div class="team-info">
+                      <img src="{{ match.team2.get_logo_url }}" alt="{{ match.team2.name }}" class="team-logo-sm">
+                      <span class="fw-bold">{{ match.team2.short_name }}</span>
+                    </div>
+                    <div class="team-score">
+                      {% for inn in match.innings.all %}
+                        {% if inn.batting_team == match.team2 %}
+                          {{ inn.runs }}/{{ inn.wickets }} <span class="team-overs">({{ inn.overs_formatted }})</span>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                  <!-- Status / Result summary -->
+                  <div class="match-status-summary text-truncate">
+                    {% if match.result_text %}
+                      {{ match.result_text }}
+                    {% elif match.status == 'live' %}
+                      {% if match.current_innings %}
+                        {{ match.current_innings.batting_team.short_name }} batting â€¢ CRR: {{ match.current_innings.current_run_rate }}
+                      {% else %}
+                        Match in progress
+                      {% endif %}
+                    {% else %}
+                      Starts at {{ match.venue.name|default:"TBD" }}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Card Actions -->
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                  <a href="{% url 'matches:match_detail' slug=match.slug %}" class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold" style="color: var(--primary);">
+                    Scorecard & Live &rarr;
+                  </a>
+                  <div class="d-flex gap-2 align-items-center">
+                    {% if user.role == 'scorer' %}
+                      <a href="{% url 'matches:match_scorer' slug=match.slug %}" class="badge bg-danger bg-opacity-25 text-danger border border-danger-subtle text-decoration-none" title="Live Scorer Console">
+                        <i class="fa-solid fa-tower-broadcast me-1"></i> Score
+                      </a>
+                    {% endif %}
+                    <button class="btn btn-sm text-secondary border-0 p-0 btn-save-match" data-match-id="{{ match.id }}" title="Save to Watchlist">
+                      <i class="fa-regular fa-bookmark"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="col-12 py-4 text-center text-muted">
+              <i class="fa-solid fa-calendar-xmark fs-2 mb-2"></i>
+              <p>No local matches scheduled at this moment.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= MAIN CONTENT + SIDEBAR ================= -->
+<div class="container py-5">
+  <div class="row g-4">
+    <!-- Left / Center Main Column (8 Cols) -->
+    <div class="col-lg-8">
+      <!-- BREAKING NEWS TICKER -->
+      {% if breaking_news %}
+        <div class="alert alert-danger d-flex align-items-center gap-3 py-3 px-4 mb-4 rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, var(--pearl-white) 0%, var(--dusty-rose) 100%);">
+          <span class="badge badge-live-custom">BREAKING</span>
+          <div class="overflow-hidden text-nowrap w-100">
+            {% for bn in breaking_news %}
+              <a href="{{ bn.get_absolute_url }}" class="text-danger fw-semibold text-decoration-none me-4">
+                {{ bn.title }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- LEAD / HERO STORY -->
+      {% if featured_news %}
+        <div class="content-card mb-4">
+          <div class="position-relative" style="height: 420px;">
+            <img src="{{ featured_news.get_image_url }}" alt="{{ featured_news.title }}" class="w-100 h-100 object-fit-cover">
+            <div class="position-absolute bottom-0 start-0 end-0 p-5" style="background: linear-gradient(180deg, color-mix(in srgb, var(--midnight-navy) 0%, transparent) 0%, color-mix(in srgb, var(--midnight-navy) 95%, transparent) 100%);">
+              <span class="badge badge-premium mb-3">{{ featured_news.category.name }}</span>
+              <h3 class="text-white fw-bold mb-2">
+                <a href="{{ featured_news.get_absolute_url }}" class="text-white text-decoration-none">{{ featured_news.title }}</a>
+              </h3>
+              <p class="text-light opacity-75 mb-0 d-none d-md-block">{{ featured_news.excerpt }}</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- TOP STORIES GRID -->
+      <div class="mb-4">
+        <div class="section-title">
+          <span><i class="fa-solid fa-newspaper me-2" style="color: var(--primary);"></i> Top Cricket Stories</span>
+          <a href="{% url 'news:news_list' %}" class="small text-decoration-none fw-semibold">View All News &rarr;</a>
+        </div>
+        <div class="row g-3">
+          {% for news in top_news %}
+            <div class="col-md-6">
+              <div class="content-card">
+                <div class="card-thumb">
+                  <img src="{{ news.get_image_url }}" alt="{{ news.title }}">
+                </div>
+                <div class="p-4 d-flex flex-column justify-content-between flex-grow-1">
+                  <div>
+                    <span class="badge bg-light text-dark border mb-2">{{ news.category.name }}</span>
+                    <h6 class="fw-bold mb-2">
+                      <a href="{{ news.get_absolute_url }}" class="text-reset text-decoration-none">{{ news.title }}</a>
+                    </h6>
+                    <p class="text-muted small mb-0">{{ news.excerpt|truncatechars:90 }}</p>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small text-muted">
+                    <span><i class="fa-regular fa-clock me-1"></i> {{ news.published_at|timesince }} ago</span>
+                    <span><i class="fa-regular fa-eye me-1"></i> {{ news.views_count }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- LOCAL & DOMESTIC TOURNAMENTS SECTION -->
+      {% if local_tournaments %}
+        <div class="mb-4">
+          <div class="section-title">
+            <span><i class="fa-solid fa-trophy me-2" style="color: var(--accent);"></i> Active Tournaments & Leagues</span>
+            <a href="{% url 'series:series_list' %}" class="small text-decoration-none fw-semibold">All Tournaments &rarr;</a>
+          </div>
+          <div class="row g-3">
+            {% for tour in local_tournaments %}
+              <div class="col-md-6">
+                <div class="bg-card-custom h-100">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                      <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle text-uppercase font-monospace" style="font-size: 0.68rem;">
+                        {{ tour.get_category_display }}
+                      </span>
+                      <h6 class="fw-bold mt-2 mb-0">
+                        <a href="{{ tour.get_absolute_url }}" class="text-reset text-decoration-none">{{ tour.name }}</a>
+                      </h6>
+                    </div>
+                    <span class="badge bg-secondary text-light font-monospace" style="font-size: 0.7rem;">{{ tour.cricket_format }}</span>
+                  </div>
+                  <div class="small text-muted mb-3">
+                    <i class="fa-solid fa-location-dot me-1" style="color: var(--live-red);"></i> {{ tour.host_country }} â€¢ {{ tour.start_date|date:"M d" }} - {{ tour.end_date|date:"M d, Y" }}
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
+                    <span class="small text-muted">{{ tour.participating_teams.count }} Teams participating</span>
+                    <a href="{{ tour.get_absolute_url }}" class="btn btn-sm btn-outline-emerald py-0 px-2 rounded-pill small">
+                      Fixtures & Standings &rarr;
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- VIDEO HIGHLIGHTS SECTION -->
+      <div class="mb-4">
+        <div class="section-title">
+          <span><i class="fa-solid fa-play-circle me-2" style="color: var(--live-red);"></i> Match Highlights & Videos</span>
+          <a href="{% url 'videos:video_list' %}" class="small text-decoration-none fw-semibold">More Videos &rarr;</a>
+        </div>
+        <div class="row g-3">
+          {% for video in home_videos %}
+            <div class="col-md-6">
+              <div class="content-card">
+                <div class="card-thumb">
+                  <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}">
+                  <a href="{{ video.get_absolute_url }}" class="video-play-btn"><i class="fa-solid fa-play"></i></a>
+                  <span class="position-absolute bottom-0 end-0 bg-dark text-white px-2 py-1 m-2 rounded small fw-bold" style="font-size: 0.75rem;">
+                    {{ video.duration }}
+                  </span>
+                </div>
+                <div class="p-3">
+                  <span class="badge bg-secondary mb-1" style="font-size: 0.7rem;">{{ video.category.name }}</span>
+                  <h6 class="fw-bold mb-1">
+                    <a href="{{ video.get_absolute_url }}" class="text-reset text-decoration-none">{{ video.title }}</a>
+                  </h6>
+                  <div class="small text-muted"><i class="fa-regular fa-eye me-1"></i> {{ video.views_count }} views</div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- PHOTO GALLERIES STRIP -->
+      <div class="mb-4">
+        <div class="section-title">
+          <span><i class="fa-solid fa-camera me-2" style="color: var(--secondary);"></i> Action Photo Galleries</span>
+          <a href="{% url 'photos:album_list' %}" class="small text-decoration-none fw-semibold">View Galleries &rarr;</a>
+        </div>
+        <div class="row g-3">
+          {% for album in photo_albums %}
+            <div class="col-md-6 col-lg-3">
+              <a href="{{ album.get_absolute_url }}" class="text-decoration-none text-reset">
+                <div class="content-card h-100">
+                  <div class="card-thumb" style="padding-top: 75%;">
+                    <img src="{{ album.get_cover_url }}" alt="{{ album.title }}">
+                  </div>
+                  <div class="p-3 text-center">
+                    <div class="fw-bold small text-truncate">{{ album.title }}</div>
+                    <span class="badge bg-light text-secondary border small">{{ album.photos.count }} Photos</span>
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar Column (4 Cols) -->
+    <div class="col-lg-4">
+      <!-- ADVERTISEMENT PLACEHOLDER (STANDARD 300x250) -->
+      <div class="p-4 bg-subtle border rounded-3 text-center mb-4">
+        <span class="text-uppercase text-muted fw-bold" style="font-size: 0.65rem; letter-spacing: 1px;">Sponsored Advertisement</span>
+        <div class="bg-secondary bg-opacity-25 rounded d-flex align-items-center justify-content-center text-muted mt-3" style="height: 200px;">
+          <div class="small"><i class="fa-solid fa-rectangle-ad fs-2 d-block mb-1"></i> Ad Placement Space</div>
+        </div>
+      </div>
+
+      <!-- LOCAL RANKINGS WIDGET -->
+      <div class="content-card mb-4">
+        <div class="card-header-clean">
+          <h6 class="mb-0 fw-bold"><i class="fa-solid fa-trophy me-2" style="color: var(--accent);"></i> Local Rankings</h6>
+          <a href="{% url 'rankings:rankings_list' %}" class="small text-decoration-none fw-semibold" style="color: var(--primary);">Full Table &rarr;</a>
+        </div>
+        <div class="p-0">
+          <table class="sports-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th class="text-end">Rating</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rank in rankings_snippet %}
+                <tr>
+                  <td class="fw-bold">{{ rank.rank }}</td>
+                  <td>
+                    <div class="fw-semibold">{{ rank.name }}</div>
+                  </td>
+                  <td><span class="badge bg-light text-dark border">{{ rank.country }}</span></td>
+                  <td class="text-end fw-bold" style="color: var(--primary);">{{ rank.rating }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-center py-3 text-muted">No rankings available</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TRENDING STORIES -->
+      <div class="content-card mb-4">
+        <div class="card-header-clean">
+          <h6 class="mb-0 fw-bold"><i class="fa-solid fa-fire me-2" style="color: var(--live-red);"></i> Trending Stories</h6>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for trend in trending_stories %}
+            <a href="{{ trend.get_absolute_url }}" class="list-group-item list-group-item-action py-3">
+              <div class="d-flex w-100 justify-content-between mb-1">
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle">{{ trend.category.name }}</span>
+                <small class="text-muted"><i class="fa-regular fa-clock"></i> {{ trend.published_at|timesince }} ago</small>
+              </div>
+              <h6 class="mb-1 fw-semibold">{{ trend.title }}</h6>
+            </a>
+          {% empty %}
+            <div class="p-3 text-muted small">No trending stories right now.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- FEATURED TEAMS -->
+      <div class="content-card mb-4">
+        <div class="card-header-clean">
+          <h6 class="mb-0 fw-bold"><i class="fa-solid fa-shield me-2" style="color: var(--secondary);"></i> Popular Teams</h6>
+          <a href="{% url 'teams:team_list' %}" class="small text-decoration-none">All Teams &rarr;</a>
+        </div>
+        <div class="p-3">
+          <div class="row g-2">
+            {% for team in featured_teams %}
+              <div class="col-6">
+                <a href="{{ team.get_absolute_url }}" class="btn btn-ghost w-100 d-flex align-items-center gap-2 p-2 text-decoration-none text-start">
+                  <img src="{{ team.get_logo_url }}" alt="{{ team.name }}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%;">
+                  <span class="small fw-bold text-truncate">{{ team.short_name }}</span>
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

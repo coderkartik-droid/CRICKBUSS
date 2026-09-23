@@ -7,6 +7,8 @@ from apps.accounts.models import CustomUser
 from apps.matches.models import Ground, Match, Tournament, Venue
 from apps.players.models import Player
 from apps.teams.models import Team
+from apps.photos.models import PhotoItem
+from apps.news.models import NewsArticle
 
 
 class ManagedUserForm(forms.ModelForm):
@@ -350,3 +352,80 @@ class LocalMatchForm(forms.ModelForm):
             match.save()
             self.save_m2m()
         return match
+
+
+class SimplePhotoForm(forms.ModelForm):
+    """Simplified form for dashboard photo management - Photo + Title only"""
+    class Meta:
+        model = PhotoItem
+        fields = ('image', 'caption')
+        labels = {
+            'image': 'Photo',
+            'caption': 'Title'
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['image'].widget.attrs.setdefault('accept', 'image/*')
+        self.fields['image'].widget.attrs.setdefault('class', 'form-control')
+        self.fields['caption'].widget.attrs.setdefault('placeholder', 'Enter photo title')
+        self.fields['caption'].widget.attrs.setdefault('class', 'form-control')
+        self.fields['caption'].required = True
+        self.fields['caption'].label = 'Title'
+
+
+class SimpleNewsForm(forms.ModelForm):
+    """Simplified form for dashboard news management - Author, Image, Title, Description only"""
+    class Meta:
+        model = NewsArticle
+        fields = ('author_name_fallback', 'featured_image', 'title', 'content')
+        labels = {
+            'author_name_fallback': 'Author Name',
+            'featured_image': 'News Image',
+            'title': 'News Title',
+            'content': 'News Description'
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set up author name field
+        self.fields['author_name_fallback'].widget.attrs.setdefault('placeholder', 'Enter author name')
+        self.fields['author_name_fallback'].widget.attrs.setdefault('class', 'form-control')
+        self.fields['author_name_fallback'].required = True
+        
+        # Set up image field
+        self.fields['featured_image'].widget.attrs.setdefault('accept', 'image/*')
+        self.fields['featured_image'].widget.attrs.setdefault('class', 'form-control')
+        self.fields['featured_image'].required = False
+        
+        # Set up title field
+        self.fields['title'].widget.attrs.setdefault('placeholder', 'Enter news title')
+        self.fields['title'].widget.attrs.setdefault('class', 'form-control')
+        self.fields['title'].required = True
+        
+        # Set up content field
+        self.fields['content'].widget.attrs.setdefault('placeholder', 'Enter news description')
+        self.fields['content'].widget.attrs.setdefault('class', 'form-control')
+        self.fields['content'].widget = forms.Textarea(attrs={'rows': 6, 'class': 'form-control'})
+        self.fields['content'].required = True
+
+    def save(self, commit=True):
+        news = super().save(commit=False)
+        # Auto-generate slug from title
+        if not news.slug:
+            news.slug = slugify(news.title)[:210]
+        # Set default category if not set
+        if not hasattr(news, 'category') or not news.category:
+            from apps.news.models import NewsCategory
+            default_category, created = NewsCategory.objects.get_or_create(
+                name='General',
+                defaults={'slug': 'general'}
+            )
+            news.category = default_category
+        # Set published time automatically
+        if not news.published_at:
+            from django.utils import timezone
+            news.published_at = timezone.now()
+        if commit:
+            news.save()
+        return news

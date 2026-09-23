@@ -16,7 +16,7 @@ from django.contrib.auth import get_user_model
 from .models import SavedMatch, NotificationPreference
 from apps.news.models import ArticleBookmark, ArticleComment, NewsArticle
 from apps.videos.models import CricketVideo, VideoBookmark
-from apps.photos.models import PhotoAlbum
+from apps.photos.models import PhotoAlbum, PhotoItem
 from apps.matches.models import Ground, Match, Tournament
 from apps.teams.models import Team
 from apps.players.models import Player
@@ -24,7 +24,7 @@ from apps.accounts.models import CustomUser
 from .forms import (
     LocalGroundForm, LocalMatchForm, LocalPlayerForm, LocalTeamForm,
     LocalTournamentForm, ManagedUserForm, ScorerAssignmentForm,
-    VenueForm,
+    VenueForm, SimplePhotoForm, SimpleNewsForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -523,3 +523,132 @@ class WebsiteSettingsView(LoginRequiredMixin, UserPassesTestMixin, View):
         setting.save()
         messages.success(request, 'Website branding and operational settings saved!')
         return redirect('dashboard:website_settings')
+
+
+class PhotoManagementView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Dashboard view for Photo management - CRUD operations"""
+    template_name = 'dashboard/photo_management.html'
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def get(self, request):
+        photos = PhotoItem.objects.select_related('album').order_by('-created_at')
+        form = SimplePhotoForm()
+        editing_photo = None
+        return render(request, self.template_name, {
+            'photos': photos,
+            'form': form,
+            'editing_photo': editing_photo
+        })
+
+    def post(self, request):
+        action = request.POST.get('action')
+        
+        if action == 'create':
+            form = SimplePhotoForm(request.POST, request.FILES)
+            if form.is_valid():
+                # Create a default album if needed
+                from apps.photos.models import PhotoAlbum
+                default_album, _ = PhotoAlbum.objects.get_or_create(
+                    title='General Photos',
+                    defaults={'slug': 'general-photos', 'category': 'stadium'}
+                )
+                photo = form.save(commit=False)
+                photo.album = default_album
+                photo.save()
+                messages.success(request, 'Photo uploaded successfully!')
+                return redirect('dashboard:photo_management')
+            else:
+                photos = PhotoItem.objects.select_related('album').order_by('-created_at')
+                return render(request, self.template_name, {
+                    'photos': photos,
+                    'form': form,
+                    'editing_photo': None
+                })
+        
+        elif action == 'edit':
+            photo_id = request.POST.get('photo_id')
+            photo = get_object_or_404(PhotoItem, id=photo_id)
+            form = SimplePhotoForm(request.POST, request.FILES, instance=photo)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Photo updated successfully!')
+                return redirect('dashboard:photo_management')
+            else:
+                photos = PhotoItem.objects.select_related('album').order_by('-created_at')
+                return render(request, self.template_name, {
+                    'photos': photos,
+                    'form': form,
+                    'editing_photo': photo
+                })
+        
+        elif action == 'delete':
+            photo_id = request.POST.get('photo_id')
+            photo = get_object_or_404(PhotoItem, id=photo_id)
+            photo.delete()
+            messages.success(request, 'Photo deleted successfully!')
+            return redirect('dashboard:photo_management')
+        
+        return redirect('dashboard:photo_management')
+
+
+class NewsManagementView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Dashboard view for News management - CRUD operations"""
+    template_name = 'dashboard/news_management.html'
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def get(self, request):
+        news_articles = NewsArticle.objects.select_related('category', 'author').order_by('-published_at')
+        form = SimpleNewsForm()
+        return render(request, self.template_name, {
+            'news_articles': news_articles,
+            'form': form,
+            'editing_news': None
+        })
+
+    def post(self, request):
+        action = request.POST.get('action')
+        
+        if action == 'create':
+            form = SimpleNewsForm(request.POST, request.FILES)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'News article published successfully!')
+                return redirect('dashboard:news_management')
+            else:
+                news_articles = NewsArticle.objects.select_related('category', 'author').order_by('-published_at')
+                return render(request, self.template_name, {
+                    'news_articles': news_articles,
+                    'form': form,
+                    'editing_news': None
+                })
+        
+        elif action == 'edit':
+            news_id = request.POST.get('news_id')
+            news = get_object_or_404(NewsArticle, id=news_id)
+            form = SimpleNewsForm(request.POST, request.FILES, instance=news)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'News article updated successfully!')
+                return redirect('dashboard:news_management')
+            else:
+                news_articles = NewsArticle.objects.select_related('category', 'author').order_by('-published_at')
+                return render(request, self.template_name, {
+                    'news_articles': news_articles,
+                    'form': form,
+                    'editing_news': news
+                })
+        
+        elif action == 'delete':
+            news_id = request.POST.get('news_id')
+            news = get_object_or_404(NewsArticle, id=news_id)
+            news.delete()
+            messages.success(request, 'News article deleted successfully!')
+            return redirect('dashboard:news_management')
+        
+        return redirect('dashboard:news_management')

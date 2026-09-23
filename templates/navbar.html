@@ -156,6 +156,9 @@
             <ul class="dropdown-menu dropdown-menu-end">
               {% if user.is_superuser or user.role == 'admin' %}
                 <li><a class="dropdown-item" href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-2" style="color: var(--primary);"></i> Admin Dashboard</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'dashboard:news_management' %}"><i class="fa-solid fa-newspaper me-2" style="color: var(--secondary);"></i> Manage News</a></li>
+                <li><a class="dropdown-item" href="{% url 'dashboard:photo_management' %}"><i class="fa-solid fa-camera me-2" style="color: var(--accent);"></i> Manage Photos</a></li>
               {% elif user.role == 'scorer' %}
                 <li><a class="dropdown-item" href="{% url 'dashboard:scorer' %}"><i class="fa-solid fa-tower-broadcast me-2" style="color: var(--danger);"></i> Scorer Panel</a></li>
               {% endif %}

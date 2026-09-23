@@ -16,4 +16,6 @@ urlpatterns = [
     path('notifications/', views.NotificationSettingsView.as_view(), name='notifications'),
     path('my-comments/', views.UserCommentsListView.as_view(), name='my_comments'),
     path('save-match/<uuid:match_id>/', views.ToggleSaveMatchView.as_view(), name='toggle_save_match'),
+    path('photos/', views.PhotoManagementView.as_view(), name='photo_management'),
+    path('news/', views.NewsManagementView.as_view(), name='news_management'),
 ]

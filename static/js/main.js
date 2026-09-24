@@ -116,7 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': csrftoken,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
                     }
                 });
 
@@ -138,6 +140,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Save match error:', err);
             }
         });
+
+        // Video detail actions use normal forms as a fallback, but stay in-page
+        // when JavaScript is available.
+        document.querySelectorAll('.ajax-video-toggle').forEach(form => {
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const button = form.querySelector('button');
+                const icon = button && button.querySelector('i');
+                const type = form.dataset.toggleType;
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (response.status === 403 || response.redirected) {
+                        window.location.href = '/accounts/login/';
+                        return;
+                    }
+                    const data = await response.json();
+                    if (type === 'like') {
+                        if (icon) icon.className = `${data.liked ? 'fa-solid' : 'fa-regular'} fa-heart me-1${data.liked ? ' text-danger' : ''}`;
+                        const count = button && button.querySelector('span');
+                        if (count) count.textContent = data.total_likes;
+                        showToast(data.liked ? 'You liked this video' : 'Like removed', 'success');
+                    } else {
+                        if (icon) icon.className = `${data.bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark`;
+                        showToast(data.message, 'success');
+                    }
+                } catch (error) {
+                    console.error('Video action failed:', error);
+                }
+            });
+        });
     });
 
     // 5. AJAX Like News Article
@@ -148,7 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`/news/${slug}/like/`, {
                     method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken }
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
                 });
                 if (res.status === 403) {
                     window.location.href = '/accounts/login/';
@@ -179,7 +222,11 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`/news/${slug}/bookmark/`, {
                     method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken }
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
                 });
                 if (res.status === 403) {
                     window.location.href = '/accounts/login/';

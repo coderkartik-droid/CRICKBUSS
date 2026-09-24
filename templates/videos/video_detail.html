@@ -44,14 +44,14 @@
 
             <!-- Actions (Like & Bookmark) -->
             <div class="d-flex gap-2">
-              <form action="{% url 'videos:toggle_like' slug=video.slug %}" method="POST" class="d-inline">
+              <form action="{% url 'videos:toggle_like' slug=video.slug %}" method="POST" class="d-inline ajax-video-toggle" data-toggle-type="like">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-danger">
                   <i class="{% if has_liked %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %} me-1"></i>
                   <span>{{ video.likes_count }}</span>
                 </button>
               </form>
-              <form action="{% url 'videos:toggle_bookmark' slug=video.slug %}" method="POST" class="d-inline">
+              <form action="{% url 'videos:toggle_bookmark' slug=video.slug %}" method="POST" class="d-inline ajax-video-toggle" data-toggle-type="bookmark">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-warning text-dark">
                   <i class="{% if has_bookmarked %}fa-solid fa-bookmark{% else %}fa-regular fa-bookmark{% endif %}"></i>

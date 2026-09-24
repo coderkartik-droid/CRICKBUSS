@@ -505,7 +505,10 @@ class ToggleSaveMatchView(LoginRequiredMixin, View):
             is_saved = True
             message = 'Match added to your saved watchlist'
 
-        return JsonResponse({'is_saved': is_saved, 'message': message})
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'is_saved': is_saved, 'message': message})
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer) if referer else redirect('matches:match_detail', slug=match.slug)
 
 
 class WebsiteSettingsView(LoginRequiredMixin, UserPassesTestMixin, View):

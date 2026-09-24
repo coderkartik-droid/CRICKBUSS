@@ -112,7 +112,10 @@ class ToggleLikeView(LoginRequiredMixin, View):
             NewsArticle.objects.filter(pk=article.pk).update(likes_count=F('likes_count') + 1)
 
         article.refresh_from_db()
-        return JsonResponse({'liked': liked, 'total_likes': article.likes_count})
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'liked': liked, 'total_likes': article.likes_count})
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer) if referer else redirect('news:article_detail', slug=slug)
 
 
 class ToggleBookmarkView(LoginRequiredMixin, View):
@@ -128,4 +131,7 @@ class ToggleBookmarkView(LoginRequiredMixin, View):
             bookmarked = True
             message = 'Article saved to bookmarks'
 
-        return JsonResponse({'bookmarked': bookmarked, 'message': message})
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'bookmarked': bookmarked, 'message': message})
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer) if referer else redirect('news:article_detail', slug=slug)

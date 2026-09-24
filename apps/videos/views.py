@@ -1,5 +1,5 @@
 from django.views.generic import ListView, DetailView, View
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.db.models import Q, F
@@ -73,7 +73,10 @@ class ToggleVideoLikeView(LoginRequiredMixin, View):
             CricketVideo.objects.filter(pk=video.pk).update(likes_count=F('likes_count') + 1)
 
         video.refresh_from_db()
-        return JsonResponse({'liked': liked, 'total_likes': video.likes_count})
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'liked': liked, 'total_likes': video.likes_count})
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer) if referer else redirect('videos:video_detail', slug=slug)
 
 
 class ToggleVideoBookmarkView(LoginRequiredMixin, View):
@@ -89,4 +92,7 @@ class ToggleVideoBookmarkView(LoginRequiredMixin, View):
             bookmarked = True
             message = 'Video saved to bookmarks'
 
-        return JsonResponse({'bookmarked': bookmarked, 'message': message})
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'bookmarked': bookmarked, 'message': message})
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer) if referer else redirect('videos:video_detail', slug=slug)

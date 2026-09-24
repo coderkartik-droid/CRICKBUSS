@@ -359,6 +359,18 @@ class LocalManagementView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def post(self, request, entity):
         model, form_class, title = self.get_config()
+        if entity == 'player' and request.POST.get('action') == 'delete':
+            record, lookup_error = self._find_record(model, request.POST.get('record_id'))
+            if lookup_error:
+                messages.error(request, lookup_error)
+            elif record is None:
+                messages.error(request, 'Player not found.')
+            else:
+                player_name = str(record)
+                record.delete()
+                messages.success(request, f'Player "{player_name}" deleted successfully.')
+            return redirect('dashboard:local_management', entity='player')
+
         record, lookup_error = self._find_record(model, request.POST.get('record_id'))
         data = self._normalise_relation_values(form_class, request.POST)
         creating_venue = entity == 'ground' and self._wants_venue_create(request.POST)

@@ -90,6 +90,13 @@ class Player(models.Model):
     country = models.CharField(_('country'), max_length=80, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    catches = models.PositiveIntegerField(default=0)
+    run_outs = models.PositiveIntegerField(default=0)
+    stumpings = models.PositiveIntegerField(default=0)
+    matches_won = models.PositiveIntegerField(default=0)
+    matches_lost = models.PositiveIntegerField(default=0)
+    wins_as_captain = models.PositiveIntegerField(default=0)
+    losses_as_captain = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name = _('Player')

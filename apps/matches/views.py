@@ -654,6 +654,7 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
             and match.assigned_scorers.filter(pk=u.pk).exists()
         )
 
+    @transaction.atomic
     def post(self, request, slug):
         match = get_object_or_404(Match, slug=slug)
         action = request.POST.get("action")
@@ -1270,6 +1271,8 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
             match.save(
                 update_fields=["status", "result_text", "winning_team", "man_of_match"]
             )
+            from apps.matches.services.career import process_completed_match
+            process_completed_match(match.pk)
             if match.series_id:
                 rebuild_points_table(match.series)
             return JsonResponse(

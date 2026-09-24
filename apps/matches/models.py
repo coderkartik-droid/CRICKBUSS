@@ -168,6 +168,7 @@ class Match(models.Model):
     is_featured = models.BooleanField(_('featured match on hero section'), default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    stats_processed = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = _('Match')

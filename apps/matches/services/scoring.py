@@ -180,8 +180,14 @@ def recalculate_innings(innings):
                     'score': totals['runs'],
                     'overs': overs_str,
                 })
-        if delivery.extra_type in totals:
-            totals[delivery.extra_type] += delivery.extra_runs
+        extra_counter = {
+            'wide': 'wides',
+            'no_ball': 'no_balls',
+            'bye': 'byes',
+            'leg_bye': 'leg_byes',
+        }.get(delivery.extra_type)
+        if extra_counter:
+            totals[extra_counter] += delivery.extra_runs
         if not delivery.is_wide and not delivery.is_no_ball:
             legal_balls += 1
     innings.runs = totals['runs']

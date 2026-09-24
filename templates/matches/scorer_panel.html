@@ -1,84 +1,288 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}Live Scorer Console: {{ match.title }} - CrickScore Live{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4 scorer-page">
   <!-- Top Navigation & Match Title -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-      <div class="d-flex align-items-center gap-2 mb-1">
+  <header class="scorer-header mb-4">
+    <div class="scorer-header-main">
+      <div class="scorer-brand-mark"><i class="fa-solid fa-cricket-bat-ball"></i></div>
+      <div class="scorer-header-copy">
+        <div class="scorer-kicker"><span class="scorer-kicker-line"></span> CRICKBUSS SCORER DESK</div>
+        <h1 class="scorer-title mb-1">Live scoring, made effortless</h1>
+        <p class="scorer-subtitle mb-0">Official match operations console <span aria-hidden="true">â€¢</span> {{ match.title }}</p>
+      </div>
+    </div>
+    <div class="scorer-header-actions">
+      <div class="d-flex align-items-center gap-2">
         <a href="{% url 'matches:match_detail' slug=match.slug %}"
-           class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+           class="btn btn-ghost btn-sm">
           <i class="fa-solid fa-arrow-left me-1"></i> Public Match Center
         </a>
-        <span class="badge bg-danger rounded-pill px-3 py-1 font-monospace">OFFICIAL SCORER CONSOLE</span>
+        <span class="scorer-live-badge"><span class="pulse-dot"></span> LIVE SYNC</span>
       </div>
-      <h4 class="fw-bold mb-0 text-main">{{ match.title }}</h4>
+      <div class="scorer-current-match"><i class="fa-solid fa-calendar-day"></i><span>Current match</span><strong>{{ match.title }}</strong>
+      </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 font-monospace">
-        <i class="fa-solid fa-tower-broadcast me-1"></i> WebSocket Live Sync
-      </span>
-    </div>
-  </div>
+  </header>
+
+  {% if match.status == 'upcoming' and not current_inn %}
+    <section class="content-card scorer-card p-4 mb-4">
+      <div class="scorer-card-heading">
+        <div class="scorer-section-icon icon-champagne"><i class="fa-solid fa-play"></i></div>
+        <div><span class="scorer-eyebrow">Pre-match setup</span><h2 class="scorer-card-title mb-0">Start Match</h2></div>
+      </div>
+      {% if not playing_xi_assigned %}
+        <p class="mb-0">Assign exactly 11 players for both teams before starting this match.</p>
+        <a href="{% url 'matches:assign_playing_xi' slug=match.slug %}" class="btn btn-outline-emerald mt-3">Assign Playing XI</a>
+      {% else %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label scorer-form-label">Toss winner</label>
+            <select id="startTossWinnerSelect" class="form-select">
+              <option value="{{ match.team1.id }}">{{ match.team1.name }}</option>
+              <option value="{{ match.team2.id }}">{{ match.team2.name }}</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label scorer-form-label">Elected to</label>
+            <select id="startTossDecisionSelect" class="form-select">
+              <option value="bat">Bat First</option>
+              <option value="bowl">Bowl First</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label scorer-form-label">Overs</label>
+            <input id="startOversInput" type="number" class="form-control" min="1" max="200" value="{{ match.overs_limit }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label scorer-form-label">Opening batsman 1</label>
+            <select id="openingBatterOneSelect" name="opening_batter_one" class="form-select">
+              {% for player in team1_xi %}<option value="{{ player.id }}" data-team="{{ match.team1.id }}">{{ player.name }} ({{ match.team1.short_name }})</option>{% endfor %}
+              {% for player in team2_xi %}<option value="{{ player.id }}" data-team="{{ match.team2.id }}">{{ player.name }} ({{ match.team2.short_name }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label scorer-form-label">Opening batsman 2</label>
+            <select id="openingBatterTwoSelect" name="opening_batter_two" class="form-select">
+              {% for player in team1_xi %}<option value="{{ player.id }}" data-team="{{ match.team1.id }}">{{ player.name }} ({{ match.team1.short_name }})</option>{% endfor %}
+              {% for player in team2_xi %}<option value="{{ player.id }}" data-team="{{ match.team2.id }}">{{ player.name }} ({{ match.team2.short_name }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label scorer-form-label">Opening bowler</label>
+            <select id="openingBowlerSelect" name="opening_bowler" class="form-select">
+              {% for player in team1_xi %}<option value="{{ player.id }}" data-team="{{ match.team1.id }}">{{ player.name }} ({{ match.team1.short_name }})</option>{% endfor %}
+              {% for player in team2_xi %}<option value="{{ player.id }}" data-team="{{ match.team2.id }}">{{ player.name }} ({{ match.team2.short_name }})</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div id="startMatchError" class="alert alert-danger mt-3 d-none"></div>
+        <button type="button" id="startMatchBtn" class="btn btn-emerald btn-lg w-100 mt-4">
+          <i class="fa-solid fa-play me-2"></i> Start Match
+        </button>
+      {% endif %}
+    </section>
+  {% endif %}
 
   <!-- Real-time Score Billboard -->
-  <div class="content-card p-4 mb-4 bg-dark text-white border-0 shadow-lg">
-    <div class="row align-items-center">
-      <div class="col-md-6">
-        <div class="text-secondary small text-uppercase font-monospace mb-1">Active Batting Innings</div>
-        <h2 class="fw-bold mb-1 text-light">
-          <span id="billboardTeam">{{ current_inn.batting_team.name|default:"TBD" }}</span>
-          <span class="text-warning ms-2" id="billboardScore">{{ current_inn.runs|default:0 }}/{{ current_inn.wickets|default:0 }}</span>
-        </h2>
-        <div class="text-secondary small">
-          Overs: <span class="text-light fw-bold font-monospace" id="billboardOvers">{{ current_inn.overs_formatted|default:"0.0" }}</span> &bull;
-          CRR: <span class="text-emerald fw-bold font-monospace" id="billboardCRR">{{ current_inn.current_run_rate|default:"0.0" }}</span>
+  <section class="scorer-scoreboard content-card mb-4">
+    <div class="scorer-scoreboard-heading">
+      <div><span class="scorer-eyebrow"><i class="fa-solid fa-chart-line"></i> Active batting innings</span><span class="scorer-live-badge scorer-live-badge-light"><span class="pulse-dot"></span> ON AIR</span></div>
+      <span class="scorer-sync-label"><i class="fa-solid fa-tower-broadcast"></i> WebSocket connected</span>
+    </div>
+    <div class="row g-3 align-items-stretch">
+      <div class="col-lg-6">
+        <div class="scorer-score-main">
+          <span class="scorer-score-team" id="billboardTeam">{{ current_inn.batting_team.name|default:"TBD" }}</span>
+          <strong id="billboardScore">{{ current_inn.runs|default:0 }}/{{ current_inn.wickets|default:0 }}</strong>
+          <div class="scorer-score-meta"><span><i class="fa-solid fa-stopwatch"></i> Overs <b id="billboardOvers">{{ current_inn.overs_formatted|default:"0.0" }}</b></span><span><i class="fa-solid fa-gauge-high"></i> CRR <b id="billboardCRR">{{ current_inn.current_run_rate|default:"0.0" }}</b></span></div>
         </div>
       </div>
-      <div class="col-md-6 text-md-end mt-3 mt-md-0">
-        <div class="text-secondary small font-monospace">Last Ball Broadcast:</div>
-        <div class="fs-6 fw-semibold text-warning" id="lastBallFeedback">
-          {% if recent_deliveries.first %}
-            Over {{ recent_deliveries.first.over_number }}.{{ recent_deliveries.first.ball_number }}: {{ recent_deliveries.first.commentary }}
-          {% else %}
-            Match ready. Log first ball delivery below.
-          {% endif %}
+      <div class="col-lg-6">
+        <div class="scorer-last-ball">
+          <span class="scorer-eyebrow"><i class="fa-solid fa-bolt"></i> Last ball broadcast</span>
+          <div class="scorer-last-ball-text" id="lastBallFeedback">
+            {% if recent_deliveries.first %}
+              Over {{ recent_deliveries.first.over_number }}.{{ recent_deliveries.first.ball_number }}: {{ recent_deliveries.first.commentary }}
+            {% else %}
+              Match ready. Log first ball delivery below.
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
+  <!-- Match Setup Overview -->
+  <section class="content-card scorer-card p-4 mb-4">
+    <div class="scorer-card-heading">
+      <div class="scorer-section-icon icon-navy"><i class="fa-solid fa-clipboard-list"></i></div>
+      <div><span class="scorer-eyebrow">Match setup</span><h2 class="scorer-card-title mb-0">Match information</h2></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6"><span class="scorer-eyebrow">Teams</span><p class="fw-bold mb-0">{{ match.team1.name }} <span class="text-muted">vs</span> {{ match.team2.name }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Match type</span><p class="fw-bold mb-0">{{ match.get_match_type_display }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Tournament</span><p class="fw-bold mb-0">{{ match.tournament.name|default:"Not assigned" }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Ground</span><p class="fw-bold mb-0">{{ match.ground.name|default:match.venue.name|default:"Not assigned" }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Date and time</span><p class="fw-bold mb-0">{{ match.start_datetime|date:"d M Y, H:i" }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Status</span><p class="fw-bold mb-0">{{ match.get_status_display }}</p></div>
+    </div>
+  </section>
+
+  <!-- Teams and Playing XI -->
+  <section class="content-card scorer-card p-4 mb-4">
+    <div class="scorer-card-heading">
+      <div class="scorer-section-icon icon-rose"><i class="fa-solid fa-people-group"></i></div>
+      <div><span class="scorer-eyebrow">Squads</span><h2 class="scorer-card-title mb-0">Playing XI</h2></div>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <h3 class="h6 fw-bold">{{ match.team1.name }}</h3>
+        <div class="list-group list-group-flush border rounded">
+          {% for player in team1_players %}<div class="list-group-item d-flex justify-content-between small"><span>{{ player.name }}</span><span class="text-muted">{{ player.get_role_display }}</span></div>{% empty %}<div class="list-group-item text-muted small">Playing XI not configured</div>{% endfor %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h3 class="h6 fw-bold">{{ match.team2.name }}</h3>
+        <div class="list-group list-group-flush border rounded">
+          {% for player in team2_players %}<div class="list-group-item d-flex justify-content-between small"><span>{{ player.name }}</span><span class="text-muted">{{ player.get_role_display }}</span></div>{% empty %}<div class="list-group-item text-muted small">Playing XI not configured</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Officials and Settings Placeholders -->
+  <section class="content-card scorer-card p-4 mb-4">
+    <div class="scorer-card-heading">
+      <div class="scorer-section-icon icon-champagne"><i class="fa-solid fa-gear"></i></div>
+      <div><span class="scorer-eyebrow">Pre-match controls</span><h2 class="scorer-card-title mb-0">Officials and match settings</h2></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6"><span class="scorer-eyebrow">Umpire 1</span><p class="mb-0 fw-semibold">{{ match.umpire_one|default:"Not assigned" }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Umpire 2</span><p class="mb-0 fw-semibold">{{ match.umpire_two|default:"Not assigned" }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Overs per innings</span><p class="mb-0 fw-semibold">{{ match.overs_limit }}</p></div>
+      <div class="col-md-6"><span class="scorer-eyebrow">Ball type</span><p class="mb-0 fw-semibold">{{ match.ball_type }}</p></div>
+    </div>
+  </section>
+
+  {% if False %}
+    {% if not playing_xi_assigned %}
+      <section class="content-card scorer-card p-4 mb-4 border-danger">
+        <div class="scorer-card-heading">
+          <div class="scorer-section-icon icon-rose"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div><span class="scorer-eyebrow">Match setup required</span><h2 class="scorer-card-title mb-0">Playing XI is not assigned</h2></div>
+        </div>
+        <p class="mb-0">Assign exactly 11 players for both teams before starting this match.</p>
+        <a href="{% url 'matches:assign_playing_xi' slug=match.slug %}" class="btn btn-outline-emerald mt-3">Assign Playing XI</a>
+      </section>
+    {% else %}
+      <section class="content-card scorer-card p-4 mb-4">
+        <div class="scorer-card-heading">
+          <div class="scorer-section-icon icon-champagne"><i class="fa-solid fa-flag-checkered"></i></div>
+          <div><span class="scorer-eyebrow">Pre-match setup</span><h2 class="scorer-card-title mb-0">Ready to start match</h2></div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label scorer-form-label">Toss winner</label>
+            <select id="startTossWinnerSelect" class="form-select">
+              <option value="{{ match.team1.id }}">{{ match.team1.name }}</option>
+              <option value="{{ match.team2.id }}">{{ match.team2.name }}</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label scorer-form-label">Decision</label>
+            <select id="startTossDecisionSelect" class="form-select">
+              <option value="bat">Elected to Bat First</option>
+              <option value="bowl">Elected to Bowl First</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label scorer-form-label">Opening batsman 1</label>
+            <select id="legacyOpeningBatterOneSelect" class="form-select">
+              {% for player in team1_xi %}<option value="{{ player.id }}">{{ player.name }} ({{ match.team1.short_name }})</option>{% endfor %}
+              {% for player in team2_xi %}<option value="{{ player.id }}">{{ player.name }} ({{ match.team2.short_name }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label scorer-form-label">Opening batsman 2</label>
+            <select id="legacyOpeningBatterTwoSelect" class="form-select">
+              {% for player in team1_xi %}<option value="{{ player.id }}">{{ player.name }} ({{ match.team1.short_name }})</option>{% endfor %}
+              {% for player in team2_xi %}<option value="{{ player.id }}">{{ player.name }} ({{ match.team2.short_name }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label scorer-form-label">Opening bowler</label>
+            <select id="legacyOpeningBowlerSelect" class="form-select">
+              {% for player in team1_xi %}<option value="{{ player.id }}">{{ player.name }} ({{ match.team1.short_name }})</option>{% endfor %}
+              {% for player in team2_xi %}<option value="{{ player.id }}">{{ player.name }} ({{ match.team2.short_name }})</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div id="legacyStartMatchError" class="alert alert-danger mt-3 d-none"></div>
+        <button type="button" id="legacyStartMatchBtn" class="btn btn-emerald btn-lg w-100 mt-4">
+          <i class="fa-solid fa-play me-2"></i> Start Match
+        </button>
+      </section>
+    {% endif %}
+  {% endif %}
+
+  {% if can_score %}
   <!-- Scorer Interactive Control Grid -->
-  <div class="row g-4">
+  <div class="row g-4 scorer-workspace">
     <!-- Main Ball-by-Ball Keypad -->
     <div class="col-lg-8">
-      <div class="content-card p-4 mb-4">
-        <h5 class="fw-bold mb-3 border-bottom pb-2">Ball-by-Ball Scoring Engine</h5>
-
+      <section class="content-card scorer-card p-4 mb-4">
+        <div class="scorer-card-heading">
+          <div class="scorer-section-icon icon-navy"><i class="fa-solid fa-calculator"></i></div>
+          <div><span class="scorer-eyebrow">Live operations</span><h2 class="scorer-card-title mb-0">Ball-by-ball scoring engine</h2></div>
+        </div>
         <!-- Crease Selection (Batter & Bowler) -->
         <div class="row g-3 mb-4">
           <div class="col-md-6">
-            <label class="form-label fw-semibold small text-muted">Striker at Crease ({{ current_inn.batting_team.short_name|default:"Batting Team" }})</label>
+            <label class="form-label scorer-form-label"><i class="fa-solid fa-person-running icon-rose"></i> Striker at crease <span>({{ current_inn.batting_team.short_name|default:"Batting Team" }})</span></label>
             <select id="strikerSelect" class="form-select form-select-sm">
-              {% for p in batting_team_players %}
-                <option value="{{ p.id }}" {% if forloop.first %}selected{% endif %}>{{ p.name }} ({{ current_inn.batting_team.short_name|default:"BAT" }})</option>
+              <option value="">-- Select new batsman --</option>
+              {% for p in batting_xi %}
+                <option value="{{ p.id }}" {% if p.id == current_inn.striker_id %}selected{% endif %}>{{ p.name }} ({{ current_inn.batting_team.short_name|default:"BAT" }})</option>
               {% endfor %}
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold small text-muted">Active Bowler ({{ current_inn.bowling_team.short_name|default:"Bowling Team" }})</label>
-            <select id="bowlerSelect" class="form-select form-select-sm">
-              {% for p in bowling_team_players %}
-                <option value="{{ p.id }}" {% if forloop.first %}selected{% endif %}>{{ p.name }} ({{ current_inn.bowling_team.short_name|default:"BWL" }})</option>
+            <label class="form-label scorer-form-label"><i class="fa-solid fa-person-running icon-emerald"></i> Non-striker <span>({{ current_inn.batting_team.short_name|default:"Batting Team" }})</span></label>
+            <select id="nonStrikerSelect" class="form-select form-select-sm">
+              <option value="">-- Select non-striker --</option>
+              {% for p in batting_xi %}
+                <option value="{{ p.id }}" {% if p.id == current_inn.non_striker_id %}selected{% endif %}>
+                  {{ p.name }} ({{ current_inn.batting_team.short_name|default:"BAT" }})
+                </option>
               {% endfor %}
             </select>
           </div>
+          <div class="col-md-6">
+            <label class="form-label scorer-form-label"><i class="fa-solid fa-baseball icon-champagne"></i> Active bowler <span>({{ current_inn.bowling_team.short_name|default:"Bowling Team" }})</span></label>
+            <select id="bowlerSelect" class="form-select form-select-sm">
+              <option value="">-- Select next bowler --</option>
+              {% for p in bowling_xi %}
+                <option value="{{ p.id }}" {% if p.id == current_inn.current_bowler_id %}selected{% endif %}>{{ p.name }} ({{ current_inn.bowling_team.short_name|default:"BWL" }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 {% if not needs_new_batsman %}d-none{% endif %}" id="newBatsmanPanel">
+            <label class="form-label scorer-form-label">New batsman</label>
+            <select id="newBatsmanSelect" class="form-select form-select-sm">
+              <option value="">-- Select replacement --</option>
+              {% for p in available_batting_xi %}
+                <option value="{{ p.id }}">{{ p.name }} ({{ current_inn.batting_team.short_name|default:"BAT" }})</option>
+              {% endfor %}
+            </select>
+            <button type="button" id="selectNewBatsmanBtn" class="btn btn-outline-success btn-sm mt-2">Confirm new batsman</button>
+          </div>
+          {% endif %}
         </div>
-
         <!-- Quick Runs Keypad -->
-        <label class="form-label fw-semibold small text-muted mb-2">Runs off Bat</label>
+        <label class="form-label scorer-form-label"><i class="fa-solid fa-bullseye icon-rose"></i> Runs off bat</label>
         <div class="scorer-keypad mb-4">
           <button type="button" class="btn btn-outline-secondary fw-bold run-btn" data-runs="0">0</button>
           <button type="button" class="btn btn-outline-secondary fw-bold run-btn" data-runs="1">1</button>
@@ -86,144 +290,76 @@
           <button type="button" class="btn btn-outline-secondary fw-bold run-btn" data-runs="3">3</button>
           <button type="button" class="btn btn-primary fw-bold run-btn" data-runs="4">4</button>
           <button type="button" class="btn btn-warning text-dark fw-bold run-btn" data-runs="6">6</button>
-          <button type="button" class="btn btn-danger fw-bold" id="wicketBtn">Wicket</button>
+          <button type="button" class="btn btn-danger fw-bold" id="wicketBtn"><i class="fa-solid fa-bowling-ball"></i> Wicket</button>
         </div>
-
+        <div class="mb-3 d-none" id="wicketPlayerPanel">
+          <label class="form-label scorer-form-label">Dismissed player</label>
+          <select id="wicketPlayerSelect" class="form-select form-select-sm">
+            <option value="striker">Striker run out / wicket</option>
+            <option value="non_striker">Non-striker run out</option>
+          </select>
+        </div>
         <!-- Extras Toggles -->
-        <label class="form-label fw-semibold small text-muted mb-2">Extras / Special Delivery</label>
-        <div class="d-flex flex-wrap gap-3 mb-4 align-items-center">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="extra_type" id="extraNone" value="none" checked>
-            <label class="form-check-label small" for="extraNone">Legal Ball</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="extra_type" id="extraWide" value="wide">
-            <label class="form-check-label small text-warning fw-semibold" for="extraWide">Wide (+1 Run)</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="extra_type" id="extraNoBall" value="no_ball">
-            <label class="form-check-label small text-warning fw-semibold" for="extraNoBall">No Ball (+1 Run)</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="extra_type" id="extraBye" value="bye">
-            <label class="form-check-label small" for="extraBye">Bye</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="extra_type" id="extraLegBye" value="leg_bye">
-            <label class="form-check-label small" for="extraLegBye">Leg Bye</label>
-          </div>
+        <label class="form-label scorer-form-label"><i class="fa-solid fa-sliders icon-champagne"></i> Extras / special delivery</label>
+        <div class="scorer-extra-options d-flex flex-wrap gap-3 mb-4 align-items-center">
+          <div class="form-check"><input class="form-check-input" type="radio" name="extra_type" id="extraNone" value="none" checked><label class="form-check-label small" for="extraNone">Legal Ball</label></div>
+          <div class="form-check"><input class="form-check-input" type="radio" name="extra_type" id="extraWide" value="wide"><label class="form-check-label small text-warning fw-semibold" for="extraWide">Wide (+1 Run)</label></div>
+          <div class="form-check"><input class="form-check-input" type="radio" name="extra_type" id="extraNoBall" value="no_ball"><label class="form-check-label small text-warning fw-semibold" for="extraNoBall">No Ball (+1 Run)</label></div>
+          <div class="form-check"><input class="form-check-input" type="radio" name="extra_type" id="extraBye" value="bye"><label class="form-check-label small" for="extraBye">Bye</label></div>
+          <div class="form-check"><input class="form-check-input" type="radio" name="extra_type" id="extraLegBye" value="leg_bye"><label class="form-check-label small" for="extraLegBye">Leg Bye</label></div>
         </div>
-
         <!-- Custom Commentary Input -->
-        <div class="mb-3">
-          <label class="form-label fw-semibold small text-muted">Ball Commentary Description (Optional)</label>
-          <input type="text" id="customCommentaryInput" class="form-control"
-                 placeholder="e.g. Driven stylishly through cover point for four!">
+        <div class="mb-3"><label class="form-label scorer-form-label"><i class="fa-solid fa-comment-dots icon-rose"></i> Ball commentary <span>(optional)</span></label>
+          <input type="text" id="customCommentaryInput" class="form-control" placeholder="e.g. Driven stylishly through cover point for four!">
         </div>
-
         <!-- Action Buttons -->
-        <div class="d-flex gap-2 mb-4">
-          <button type="button" id="submitBallBtn" class="btn btn-success w-100">Log Delivery</button>
-          <button type="button" id="updateLastBtn" class="btn btn-outline-primary">
-            <i class="fa-solid fa-pen-to-square me-1"></i> Update Last
-          </button>
-          <button type="button" id="undoBallBtn" class="btn btn-outline-danger">
-            <i class="fa-solid fa-rotate-left me-1"></i> Undo
-          </button>
+        <div class="scorer-action-row d-flex gap-2 mb-4">
+          <button type="button" id="submitBallBtn" class="btn btn-success flex-grow-1"><i class="fa-solid fa-circle-plus"></i> Log delivery</button>
+          <button type="button" id="updateLastBtn" class="btn btn-outline-primary"><i class="fa-solid fa-pen-to-square"></i> Update last</button>
+          <button type="button" id="undoBallBtn" class="btn btn-outline-danger"><i class="fa-solid fa-rotate-left"></i> Undo</button>
         </div>
-
         <!-- Recent Balls Feed Table -->
-        <div class="content-card p-4">
-          <h6 class="fw-bold mb-3">Recently Logged Deliveries</h6>
+        <div class="scorer-feed-card">
+          <div class="scorer-card-heading compact"><div class="scorer-section-icon icon-rose"><i class="fa-solid fa-clock-rotate-left"></i></div><div><span class="scorer-eyebrow">Ball feed</span><h3 class="scorer-card-title mb-0">Recently logged deliveries</h3></div></div>
           <div class="table-responsive">
             <table class="table sports-table small mb-0" id="recentBallsTable">
-              <thead>
-                <tr>
-                  <th>Over</th>
-                  <th>Score</th>
-                  <th>Commentary</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Over</th><th>Score</th><th>Commentary</th></tr></thead>
               <tbody>
                 {% for b in recent_deliveries %}
-                  <tr>
-                    <td class="font-monospace fw-bold">{{ b.over_number }}.{{ b.ball_number }}</td>
-                    <td>
-                      <span class="ball-bubble {% if b.is_wicket %}wicket{% elif b.is_four %}four{% elif b.is_six %}six{% endif %}">
-                        {% if b.is_wicket %}W{% elif b.is_four %}4{% elif b.is_six %}6{% else %}{{ b.runs_off_bat }}{% endif %}
-                      </span>
-                    </td>
-                    <td class="text-secondary">{{ b.commentary }}</td>
-                  </tr>
+                  <tr><td class="font-monospace fw-bold">{{ b.over_number }}.{{ b.ball_number }}</td><td><span class="ball-bubble {% if b.is_wicket %}wicket{% elif b.is_four %}four{% elif b.is_six %}six{% endif %}">{% if b.is_wicket %}W{% elif b.is_four %}4{% elif b.is_six %}6{% else %}{{ b.runs_off_bat }}{% endif %}</span></td><td class="text-secondary">{{ b.commentary }}</td></tr>
                 {% empty %}
-                  <tr>
-                    <td colspan="3" class="text-center text-muted py-3">No deliveries recorded in this session yet.</td>
-                  </tr>
+                  <tr><td colspan="3" class="scorer-empty-cell"><i class="fa-solid fa-inbox"></i><strong>No deliveries yet</strong><span>Log the first ball to start the live feed.</span></td></tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         </div>
-
-      </div>
+      </section>
     </div>
-
     <!-- Right Column: Toss, Officials & Match Result -->
     <div class="col-lg-4">
       <!-- Toss Management Card -->
-      <div class="content-card p-4 mb-4">
-        <h6 class="fw-bold mb-3 border-bottom pb-2">Toss Operations</h6>
-        <div class="mb-3">
-          <label class="form-label fw-semibold small text-muted">Toss Winner</label>
+      <section class="content-card scorer-card scorer-side-card p-4 mb-4">
+        <div class="scorer-card-heading"><div class="scorer-section-icon icon-champagne"><i class="fa-solid fa-coins"></i></div><div><span class="scorer-eyebrow">Match setup</span><h2 class="scorer-card-title mb-0">Toss operations</h2></div></div>
+        <div class="mb-3"><label class="form-label scorer-form-label">Toss winner</label>
           <select id="tossWinnerSelect" class="form-select form-select-sm">
             <option value="{{ match.team1.id }}" {% if match.toss_winner.pk == match.team1.pk %}selected{% endif %}>{{ match.team1.name }}</option>
             <option value="{{ match.team2.id }}" {% if match.toss_winner.pk == match.team2.pk %}selected{% endif %}>{{ match.team2.name }}</option>
           </select>
         </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold small text-muted">Toss Decision</label>
-          <select id="tossDecisionSelect" class="form-select form-select-sm">
-            <option value="bat" {% if match.toss_decision == 'bat' %}selected{% endif %}>Elected to Bat First</option>
-            <option value="bowl" {% if match.toss_decision == 'bowl' %}selected{% endif %}>Elected to Bowl First</option>
-          </select>
+        <div class="mb-3"><label class="form-label scorer-form-label">Toss decision</label>
+          <select id="tossDecisionSelect" class="form-select form-select-sm"><option value="bat" {% if match.toss_decision == 'bat' %}selected{% endif %}>Elected to Bat First</option><option value="bowl" {% if match.toss_decision == 'bowl' %}selected{% endif %}>Elected to Bowl First</option></select>
         </div>
-        <button type="button" id="updateTossBtn" class="btn btn-outline-emerald btn-sm w-100">
-          <i class="fa-solid fa-coins me-1"></i> Update Toss Details
-        </button>
-      </div>
-
+        <button type="button" id="updateTossBtn" class="btn btn-outline-emerald btn-sm w-100"><i class="fa-solid fa-rotate"></i> Update toss details</button>
+      </section>
       <!-- Conclude Match & Set Result Card -->
-      <div class="content-card p-4">
-        <h6 class="fw-bold mb-3 border-bottom pb-2 text-danger">Match Outcome & Result</h6>
-        <div class="mb-3">
-          <label class="form-label fw-semibold small text-muted">Official Result Text</label>
-          <input type="text" id="resultTextInput" class="form-control form-control-sm" value="{{ match.result_text }}"
-                 placeholder="e.g. India won by 6 wickets">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold small text-muted">Winning Team</label>
-          <select id="winningTeamSelect" class="form-select form-select-sm">
-            <option value="">-- No Winner (Draw / Tie / Abandoned) --</option>
-            <option value="{{ match.team1.id }}" {% if match.winning_team.pk == match.team1.pk %}selected{% endif %}>{{ match.team1.name }}</option>
-            <option value="{{ match.team2.id }}" {% if match.winning_team.pk == match.team2.pk %}selected{% endif %}>{{ match.team2.name }}</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold small text-muted">Player of the Match</label>
-          <select id="momSelect" class="form-select form-select-sm">
-            <option value="">-- Select Player --</option>
-            {% for p in team1_players %}
-              <option value="{{ p.id }}" {% if match.man_of_match.pk == p.pk %}selected{% endif %}>{{ p.name }} ({{ match.team1.short_name }})</option>
-            {% endfor %}
-            {% for p in team2_players %}
-              <option value="{{ p.id }}" {% if match.man_of_match.pk == p.pk %}selected{% endif %}>{{ p.name }} ({{ match.team2.short_name }})</option>
-            {% endfor %}
-          </select>
-        </div>
-        <button type="button" id="concludeMatchBtn" class="btn btn-danger btn-sm w-100 fw-bold">
-          <i class="fa-solid fa-trophy me-1"></i> Finalize Match Result
-        </button>
-      </div>
+      <section class="content-card scorer-card scorer-side-card scorer-result-card p-4">
+        <div class="scorer-card-heading"><div class="scorer-section-icon icon-rose"><i class="fa-solid fa-trophy"></i></div><div><span class="scorer-eyebrow">Close match</span><h2 class="scorer-card-title mb-0">Outcome & result</h2></div></div>
+        <div class="mb-3"><label class="form-label scorer-form-label">Official result text</label><input type="text" id="resultTextInput" class="form-control form-control-sm" value="{{ match.result_text }}" placeholder="e.g. India won by 6 wickets"></div>
+        <div class="mb-3"><label class="form-label scorer-form-label">Winning team</label><select id="winningTeamSelect" class="form-select form-select-sm"><option value="">-- No Winner (Draw / Tie / Abandoned) --</option><option value="{{ match.team1.id }}" {% if match.winning_team.pk == match.team1.pk %}selected{% endif %}>{{ match.team1.name }}</option><option value="{{ match.team2.id }}" {% if match.winning_team.pk == match.team2.pk %}selected{% endif %}>{{ match.team2.name }}</option></select></div>
+        <div class="mb-3"><label class="form-label scorer-form-label">Player of the match</label><select id="momSelect" class="form-select form-select-sm"><option value="">-- Select Player --</option>{% for p in team1_players %}<option value="{{ p.id }}" {% if match.man_of_match.pk == p.pk %}selected{% endif %}>{{ p.name }} ({{ match.team1.short_name }})</option>{% endfor %}{% for p in team2_players %}<option value="{{ p.id }}" {% if match.man_of_match.pk == p.pk %}selected{% endif %}>{{ p.name }} ({{ match.team2.short_name }})</option>{% endfor %}</select></div>
+        <button type="button" id="concludeMatchBtn" class="btn btn-danger btn-sm w-100 fw-bold"><i class="fa-solid fa-flag-checkered"></i> Finalize match result</button>
+      </section>
     </div>
   </div>
 </div>
@@ -234,6 +370,125 @@
   document.addEventListener('DOMContentLoaded', () => {
     const actionUrl = "{% url 'matches:match_scorer_action' slug=match.slug %}";
     const csrf = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}';
+    const tossWinnerSelect = document.getElementById('startTossWinnerSelect');
+    const tossDecisionSelect = document.getElementById('startTossDecisionSelect');
+    const batterOneSelect = document.getElementById('openingBatterOneSelect');
+    const batterTwoSelect = document.getElementById('openingBatterTwoSelect');
+    const bowlerSelect = document.getElementById('openingBowlerSelect');
+    const strikerSelect = document.getElementById('strikerSelect');
+    const nonStrikerSelect = document.getElementById('nonStrikerSelect');
+
+    function syncNonStrikerOptions() {
+      if (!strikerSelect || !nonStrikerSelect) return;
+      const currentValue = nonStrikerSelect.value;
+      Array.from(nonStrikerSelect.options).forEach((option) => {
+        option.hidden = option.value !== '' && option.value === strikerSelect.value;
+        option.disabled = option.hidden;
+      });
+      if (currentValue === strikerSelect.value) {
+        nonStrikerSelect.value = '';
+      }
+    }
+
+    function updateOpeningPlayerOptions() {
+      if (!tossWinnerSelect || !tossDecisionSelect || !batterOneSelect || !batterTwoSelect || !bowlerSelect) return;
+
+      const team1Id = '{{ match.team1.id }}';
+      const team2Id = '{{ match.team2.id }}';
+      const tossWinnerId = tossWinnerSelect.value;
+      const battingTeamId = tossDecisionSelect.value === 'bat'
+        ? tossWinnerId
+        : (tossWinnerId === team1Id ? team2Id : team1Id);
+      const bowlingTeamId = battingTeamId === team1Id ? team2Id : team1Id;
+
+      [batterOneSelect, batterTwoSelect].forEach((select) => {
+        const previousValue = select.value;
+        const hasTeamMetadata = Array.from(select.options)
+          .some((option) => option.dataset.team);
+        Array.from(select.options).forEach((option) => {
+          const wrongTeam = hasTeamMetadata && option.value && option.dataset.team !== battingTeamId;
+          option.hidden = wrongTeam;
+          option.disabled = wrongTeam;
+        });
+        if (!Array.from(select.options).some((option) => !option.disabled && option.value === previousValue)) {
+          const firstAvailable = Array.from(select.options).find((option) => !option.disabled);
+          select.value = firstAvailable ? firstAvailable.value : '';
+        }
+      });
+
+      const previousBowler = bowlerSelect.value;
+      const hasBowlerTeamMetadata = Array.from(bowlerSelect.options)
+        .some((option) => option.dataset.team);
+      Array.from(bowlerSelect.options).forEach((option) => {
+        const wrongTeam = hasBowlerTeamMetadata && option.value && option.dataset.team !== bowlingTeamId;
+        option.hidden = wrongTeam;
+        option.disabled = wrongTeam;
+      });
+      if (!Array.from(bowlerSelect.options).some((option) => !option.disabled && option.value === previousBowler)) {
+        const firstAvailable = Array.from(bowlerSelect.options).find((option) => !option.disabled);
+        bowlerSelect.value = firstAvailable ? firstAvailable.value : '';
+      }
+    }
+
+    function preventDuplicateOpeners() {
+      if (!batterOneSelect || !batterTwoSelect) return;
+      Array.from(batterTwoSelect.options).forEach((option) => {
+        option.disabled = option.hidden || option.value === batterOneSelect.value;
+      });
+      const current = batterTwoSelect.options[batterTwoSelect.selectedIndex];
+      if (current && current.disabled) {
+        const next = Array.from(batterTwoSelect.options).find((option) => !option.disabled);
+        batterTwoSelect.value = next ? next.value : '';
+      }
+    }
+
+    tossWinnerSelect?.addEventListener('change', updateOpeningPlayerOptions);
+    tossDecisionSelect?.addEventListener('change', updateOpeningPlayerOptions);
+    batterOneSelect?.addEventListener('change', preventDuplicateOpeners);
+    updateOpeningPlayerOptions();
+    preventDuplicateOpeners();
+
+    document.getElementById('startMatchBtn')?.addEventListener('click', async () => {
+      const selectedValue = (select) => select?.selectedOptions?.[0]?.value || '';
+      const openingBatterOne = selectedValue(batterOneSelect);
+      const openingBatterTwo = selectedValue(batterTwoSelect);
+      const openingBowler = selectedValue(bowlerSelect);
+      if (!openingBatterOne || !openingBatterTwo || !openingBowler) {
+        const error = document.getElementById('startMatchError');
+        error.textContent = 'Please choose both batsmen and the opening bowler.';
+        error.classList.remove('d-none');
+        return;
+      }
+      if (openingBatterOne === openingBatterTwo) {
+        const error = document.getElementById('startMatchError');
+        error.textContent = 'Opening batsman 1 and 2 must be different players.';
+        error.classList.remove('d-none');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('action', 'start_match');
+      fd.append('csrfmiddlewaretoken', csrf);
+      fd.append('toss_winner_id', document.getElementById('startTossWinnerSelect').value);
+      fd.append('toss_decision', document.getElementById('startTossDecisionSelect').value);
+      fd.append('overs', document.getElementById('startOversInput').value);
+      fd.append('opening_batter_one', openingBatterOne);
+      fd.append('opening_batter_two', openingBatterTwo);
+      fd.append('opening_bowler', openingBowler);
+      const error = document.getElementById('startMatchError');
+      try {
+        const response = await fetch(actionUrl, {method: 'POST', body: fd});
+        const data = await response.json();
+        if (data.success && data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+        error.textContent = data.message || 'Unable to start the match.';
+        error.classList.remove('d-none');
+      } catch (err) {
+        error.textContent = 'A network error occurred. Please try again.';
+        error.classList.remove('d-none');
+      }
+    });
 
     function resetScoringState() {
       document.querySelectorAll('.run-btn').forEach(b => b.classList.remove('active'));
@@ -265,6 +520,16 @@
 
     function updateUI(payload) {
       if (!payload) return;
+      if (payload.striker_id !== undefined) document.getElementById('strikerSelect').value = payload.striker_id;
+      if (payload.non_striker_id !== undefined) nonStrikerSelect.value = payload.non_striker_id;
+      syncNonStrikerOptions();
+      if (payload.striker_id !== undefined) syncNonStrikerOptions();
+      if (payload.current_bowler_id !== undefined) document.getElementById('bowlerSelect').value = payload.current_bowler_id;
+      if (payload.needs_new_batsman !== undefined) {
+        document.getElementById('newBatsmanPanel')?.classList.toggle(
+          'd-none', !payload.needs_new_batsman
+        );
+      }
       if (payload.runs !== undefined && payload.wickets !== undefined) {
         document.getElementById('billboardScore').textContent = `${payload.runs}/${payload.wickets}`;
       }
@@ -290,6 +555,11 @@
       fd.append('commentary', document.getElementById('customCommentaryInput').value);
       fd.append('batter_id', document.getElementById('strikerSelect').value);
       fd.append('bowler_id', document.getElementById('bowlerSelect').value);
+      const dismissalPosition = document.getElementById('wicketPlayerSelect')?.value || 'striker';
+      fd.append('dismissal_position', dismissalPosition);
+      fd.append('dismissed_player_id', dismissalPosition === 'non_striker'
+        ? document.getElementById('nonStrikerSelect')?.value || ''
+        : document.getElementById('strikerSelect')?.value || '');
       return fd;
     }
 
@@ -300,6 +570,9 @@
         resetScoringState();
       }
     });
+
+    strikerSelect?.addEventListener('change', syncNonStrikerOptions);
+    syncNonStrikerOptions();
 
     document.getElementById('updateLastBtn')?.addEventListener('click', async () => {
       if (!confirm('Update the last recorded delivery with the current selections?')) return;
@@ -347,9 +620,26 @@
     document.getElementById('wicketBtn')?.addEventListener('click', () => {
       const wicketBtn = document.getElementById('wicketBtn');
       wicketBtn.classList.toggle('active');
+      document.getElementById('wicketPlayerPanel')?.classList.toggle(
+        'd-none', !wicketBtn.classList.contains('active')
+      );
       if (wicketBtn.classList.contains('active')) {
         document.querySelectorAll('.run-btn').forEach(b => b.classList.remove('active'));
         document.querySelector('.run-btn[data-runs="0"]')?.classList.add('active');
+      }
+    });
+
+    document.getElementById('selectNewBatsmanBtn')?.addEventListener('click', async () => {
+      const batsman = document.getElementById('newBatsmanSelect');
+      if (!batsman.value) return;
+      const fd = new FormData();
+      fd.append('action', 'select_new_batsman');
+      fd.append('csrfmiddlewaretoken', csrf);
+      fd.append('batsman_id', batsman.value);
+      const result = await sendScorerAction(fd);
+      if (result?.success) {
+        batsman.value = '';
+        document.getElementById('newBatsmanPanel')?.classList.add('d-none');
       }
     });
 

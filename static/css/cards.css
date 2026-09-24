@@ -1,0 +1,7 @@
+﻿/* Shared content-card primitives. Component-specific card selectors stay compatible with Bootstrap. */
+.card, .content-card, .match-card, .live-match-card, .team-card, .player-card { min-width: 0; }
+.content-card, .match-card, .live-match-card, .team-card, .player-card { max-width: 100%; }
+.card-header-clean { min-width: 0; }
+.card-header-clean > * { min-width: 0; }
+.card-thumb { position: relative; width: 100%; overflow: hidden; }
+.card-thumb > img { display: block; width: 100%; max-width: 100%; }

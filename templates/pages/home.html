@@ -235,68 +235,6 @@
   <div class="row g-4">
     <!-- Left / Center Main Column (8 Cols) -->
     <div class="col-lg-8">
-      <!-- BREAKING NEWS TICKER -->
-      {% if breaking_news %}
-        <div class="alert alert-danger d-flex align-items-center gap-3 py-3 px-4 mb-4 rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, var(--pearl-white) 0%, var(--dusty-rose) 100%);">
-          <span class="badge badge-live-custom">BREAKING</span>
-          <div class="overflow-hidden text-nowrap w-100">
-            {% for bn in breaking_news %}
-              <a href="{{ bn.get_absolute_url }}" class="text-danger fw-semibold text-decoration-none me-4">
-                {{ bn.title }}
-              </a>
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-
-      <!-- LEAD / HERO STORY -->
-      {% if featured_news %}
-        <div class="content-card mb-4">
-          <div class="position-relative" style="height: 420px;">
-            <img src="{{ featured_news.get_image_url }}" alt="{{ featured_news.title }}" class="w-100 h-100 object-fit-cover">
-            <div class="position-absolute bottom-0 start-0 end-0 p-5" style="background: linear-gradient(180deg, color-mix(in srgb, var(--midnight-navy) 0%, transparent) 0%, color-mix(in srgb, var(--midnight-navy) 95%, transparent) 100%);">
-              <span class="badge badge-premium mb-3">{{ featured_news.category.name }}</span>
-              <h3 class="text-white fw-bold mb-2">
-                <a href="{{ featured_news.get_absolute_url }}" class="text-white text-decoration-none">{{ featured_news.title }}</a>
-              </h3>
-              <p class="text-light opacity-75 mb-0 d-none d-md-block">{{ featured_news.excerpt }}</p>
-            </div>
-          </div>
-        </div>
-      {% endif %}
-
-      <!-- TOP STORIES GRID -->
-      <div class="mb-4">
-        <div class="section-title">
-          <span><i class="fa-solid fa-newspaper me-2" style="color: var(--primary);"></i> Top Cricket Stories</span>
-          <a href="{% url 'news:news_list' %}" class="small text-decoration-none fw-semibold">View All News &rarr;</a>
-        </div>
-        <div class="row g-3">
-          {% for news in top_news %}
-            <div class="col-md-6">
-              <div class="content-card">
-                <div class="card-thumb">
-                  <img src="{{ news.get_image_url }}" alt="{{ news.title }}">
-                </div>
-                <div class="p-4 d-flex flex-column justify-content-between flex-grow-1">
-                  <div>
-                    <span class="badge bg-light text-dark border mb-2">{{ news.category.name }}</span>
-                    <h6 class="fw-bold mb-2">
-                      <a href="{{ news.get_absolute_url }}" class="text-reset text-decoration-none">{{ news.title }}</a>
-                    </h6>
-                    <p class="text-muted small mb-0">{{ news.excerpt|truncatechars:90 }}</p>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small text-muted">
-                    <span><i class="fa-regular fa-clock me-1"></i> {{ news.published_at|timesince }} ago</span>
-                    <span><i class="fa-regular fa-eye me-1"></i> {{ news.views_count }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-
       <!-- LOCAL & DOMESTIC TOURNAMENTS SECTION -->
       {% if local_tournaments %}
         <div class="mb-4">
@@ -335,60 +273,32 @@
         </div>
       {% endif %}
 
-      <!-- VIDEO HIGHLIGHTS SECTION -->
-      <div class="mb-4">
-        <div class="section-title">
-          <span><i class="fa-solid fa-play-circle me-2" style="color: var(--live-red);"></i> Match Highlights & Videos</span>
-          <a href="{% url 'videos:video_list' %}" class="small text-decoration-none fw-semibold">More Videos &rarr;</a>
-        </div>
-        <div class="row g-3">
-          {% for video in home_videos %}
-            <div class="col-md-6">
-              <div class="content-card">
-                <div class="card-thumb">
-                  <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}">
-                  <a href="{{ video.get_absolute_url }}" class="video-play-btn"><i class="fa-solid fa-play"></i></a>
-                  <span class="position-absolute bottom-0 end-0 bg-dark text-white px-2 py-1 m-2 rounded small fw-bold" style="font-size: 0.75rem;">
-                    {{ video.duration }}
-                  </span>
-                </div>
-                <div class="p-3">
-                  <span class="badge bg-secondary mb-1" style="font-size: 0.7rem;">{{ video.category.name }}</span>
-                  <h6 class="fw-bold mb-1">
-                    <a href="{{ video.get_absolute_url }}" class="text-reset text-decoration-none">{{ video.title }}</a>
-                  </h6>
-                  <div class="small text-muted"><i class="fa-regular fa-eye me-1"></i> {{ video.views_count }} views</div>
-                </div>
+      {% if featured_players %}
+        <div class="mb-4">
+          <div class="section-title">
+            <span><i class="fa-solid fa-user-group me-2" style="color: var(--accent);"></i> Featured Players</span>
+            <a href="{% url 'players:player_list' %}" class="small text-decoration-none fw-semibold">View All Players &rarr;</a>
+          </div>
+          <div class="row g-3">
+            {% for player in featured_players %}
+              <div class="col-lg-3 col-md-4 col-sm-6">
+                <a href="{{ player.get_absolute_url }}" class="text-decoration-none text-reset">
+                  <div class="player-card h-100">
+                    <img src="{{ player.get_image_url }}" alt="{{ player.name }}" class="player-card-image">
+                    <h6 class="player-card-name">{{ player.name }}</h6>
+                    <div class="player-card-team">{{ player.primary_team.name|default:"Free Agent" }}</div>
+                    <span class="player-card-role">{{ player.get_role_display }}</span>
+                    {% if player.country %}
+                      <div class="small text-muted mt-2"><i class="fa-solid fa-globe me-1"></i>{{ player.country }}</div>
+                    {% endif %}
+                  </div>
+                </a>
               </div>
-            </div>
-          {% endfor %}
+            {% endfor %}
+          </div>
         </div>
-      </div>
+      {% endif %}
 
-      <!-- PHOTO GALLERIES STRIP -->
-      <div class="mb-4">
-        <div class="section-title">
-          <span><i class="fa-solid fa-camera me-2" style="color: var(--secondary);"></i> Action Photo Galleries</span>
-          <a href="{% url 'photos:album_list' %}" class="small text-decoration-none fw-semibold">View Galleries &rarr;</a>
-        </div>
-        <div class="row g-3">
-          {% for album in photo_albums %}
-            <div class="col-md-6 col-lg-3">
-              <a href="{{ album.get_absolute_url }}" class="text-decoration-none text-reset">
-                <div class="content-card h-100">
-                  <div class="card-thumb" style="padding-top: 75%;">
-                    <img src="{{ album.get_cover_url }}" alt="{{ album.title }}">
-                  </div>
-                  <div class="p-3 text-center">
-                    <div class="fw-bold small text-truncate">{{ album.title }}</div>
-                    <span class="badge bg-light text-secondary border small">{{ album.photos.count }} Photos</span>
-                  </div>
-                </div>
-              </a>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
     </div>
 
     <!-- Right Sidebar Column (4 Cols) -->
@@ -454,6 +364,33 @@
           {% endfor %}
         </div>
       </div>
+
+      {% if home_videos %}
+      <div class="content-card mb-4">
+        <div class="card-header-clean">
+          <h6 class="mb-0 fw-bold"><i class="fa-solid fa-video me-2" style="color: var(--accent);"></i> Latest Videos</h6>
+          <a href="{% url 'videos:video_list' %}" class="small text-decoration-none fw-semibold" style="color: var(--primary);">View All &rarr;</a>
+        </div>
+        <div class="row g-3 p-3">
+          {% for video in home_videos %}
+            <div class="col-lg-4 col-md-6">
+              <div class="content-card h-100">
+                <div class="card-thumb position-relative">
+                  <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}">
+                  <a href="{{ video.get_absolute_url }}" class="video-play-btn"><i class="fa-solid fa-play"></i></a>
+                  <span class="position-absolute bottom-0 end-0 bg-dark text-white px-2 py-1 m-2 rounded small fw-bold font-monospace">{{ video.duration }}</span>
+                </div>
+                <div class="p-3">
+                  <h6 class="fw-bold mb-0 text-truncate">
+                    <a href="{{ video.get_absolute_url }}" class="text-reset text-decoration-none">{{ video.title }}</a>
+                  </h6>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
 
       <!-- FEATURED TEAMS -->
       <div class="content-card mb-4">

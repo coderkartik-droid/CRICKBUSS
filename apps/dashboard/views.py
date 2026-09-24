@@ -13,7 +13,7 @@ from django.db import IntegrityError, transaction
 from django import forms
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from .models import SavedMatch, NotificationPreference
+from .models import SavedMatch, NotificationPreference, ContactMessage
 from apps.news.models import ArticleBookmark, ArticleComment, NewsArticle
 from apps.videos.models import CricketVideo, VideoBookmark
 from apps.photos.models import PhotoAlbum, PhotoItem
@@ -24,7 +24,8 @@ from apps.accounts.models import CustomUser
 from .forms import (
     LocalGroundForm, LocalMatchForm, LocalPlayerForm, LocalTeamForm,
     LocalTournamentForm, ManagedUserForm, ScorerAssignmentForm,
-    VenueForm, SimplePhotoForm, SimpleNewsForm,
+    VenueForm, SimplePhotoForm, SimpleNewsForm, SimpleVideoUploadForm,
+    ContactForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,17 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['total_news'] = NewsArticle.objects.count()
         context['total_videos'] = CricketVideo.objects.count()
         context['total_albums'] = PhotoAlbum.objects.count()
+
+        # Contact inbox metrics
+        context['unread_messages_count'] = ContactMessage.objects.filter(
+            is_read=False, is_deleted=False
+        ).count()
+
+        # Pending player registration requests badge
+        from apps.players.models import PlayerRegistrationRequest
+        context['pending_requests_count'] = PlayerRegistrationRequest.objects.filter(
+            status=PlayerRegistrationRequest.Status.PENDING
+        ).count()
 
         # Format Breakdown for Chart.js
         t20_count = Match.objects.filter(match_type=Match.MatchType.T20).count()
@@ -93,6 +105,9 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
 
         # Live matches happening now
         context['ongoing_matches'] = Match.objects.filter(status=Match.Status.LIVE).select_related('team1', 'team2')[:4]
+
+        # Latest videos for the Home page video section
+        context['latest_uploaded_videos'] = CricketVideo.objects.filter(is_active=True).order_by('-created_at')[:6]
         return context
 
 
@@ -130,18 +145,16 @@ class SuperAdminDashboardView(RoleDashboardView):
 
 class ScorerDashboardView(RoleDashboardView):
     required_role = CustomUser.Role.SCORER
+    template_name = 'dashboard/scorer_dashboard.html'
 
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        if response.status_code != 200:
-            return response
-        match = Match.objects.filter(
-            assigned_scorers=request.user,
-            status__in=(Match.Status.LIVE, Match.Status.UPCOMING, Match.Status.INNINGS_BREAK),
-        ).order_by('start_datetime').first()
-        if match:
-            return redirect('matches:match_scorer', slug=match.slug)
-        return response
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['assigned_matches'] = (
+            Match.objects.filter(assigned_scorers=self.request.user)
+            .select_related('team1', 'team2', 'tournament', 'ground__venue')
+            .order_by('start_datetime')
+        )
+        return context
 
 
 class ManagedUsersView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -498,13 +511,11 @@ class WebsiteSettingsView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request):
         from .models import SiteSetting
         setting = SiteSetting.get_settings()
-        setting.site_name = request.POST.get('site_name', setting.site_name).strip()
-        setting.site_tagline = request.POST.get('site_tagline', setting.site_tagline).strip()
-        setting.primary_color = request.POST.get('primary_color', setting.primary_color).strip()
-        setting.secondary_color = request.POST.get('secondary_color', setting.secondary_color).strip()
-        setting.banner_title = request.POST.get('banner_title', setting.banner_title).strip()
-        setting.banner_subtitle = request.POST.get('banner_subtitle', setting.banner_subtitle).strip()
-        setting.footer_text = request.POST.get('footer_text', setting.footer_text).strip()
+
+        # Only the simplified, safe-to-edit fields are handled here. All other
+        # SiteSetting fields (branding, colors, banner, logo, footer text, ...)
+        # are intentionally left untouched so existing data is preserved.
+        setting.about_us = request.POST.get('about_us', setting.about_us).strip()
         setting.contact_email = request.POST.get('contact_email', setting.contact_email).strip()
         setting.contact_phone = request.POST.get('contact_phone', setting.contact_phone).strip()
         setting.address = request.POST.get('address', setting.address).strip()
@@ -513,15 +524,8 @@ class WebsiteSettingsView(LoginRequiredMixin, UserPassesTestMixin, View):
         setting.instagram_url = request.POST.get('instagram_url', setting.instagram_url).strip()
         setting.youtube_url = request.POST.get('youtube_url', setting.youtube_url).strip()
 
-        if 'logo' in request.FILES:
-            setting.logo = request.FILES['logo']
-        if 'favicon' in request.FILES:
-            setting.favicon = request.FILES['favicon']
-        if 'banner_image' in request.FILES:
-            setting.banner_image = request.FILES['banner_image']
-
         setting.save()
-        messages.success(request, 'Website branding and operational settings saved!')
+        messages.success(request, 'Website settings saved!')
         return redirect('dashboard:website_settings')
 
 
@@ -652,3 +656,338 @@ class NewsManagementView(LoginRequiredMixin, UserPassesTestMixin, View):
             return redirect('dashboard:news_management')
         
         return redirect('dashboard:news_management')
+
+
+class VideoManagementView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Dashboard view for Uploaded Video management - CRUD operations"""
+    template_name = 'dashboard/video_management.html'
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    @staticmethod
+    def _find_video(raw_id):
+        """Return the CricketVideo for an id taken from the request, or None."""
+        try:
+            return CricketVideo.objects.filter(id=raw_id).first()
+        except (ValidationError, ValueError, TypeError):
+            return None
+
+    def get(self, request):
+        return self._render(request, SimpleVideoUploadForm())
+
+    def post(self, request):
+        action = request.POST.get('action')
+
+        if action == 'delete':
+            video = self._find_video(request.POST.get('video_id'))
+            if video is None:
+                messages.error(request, 'That video could not be found.')
+                return redirect('dashboard:video_management')
+            video.delete()
+            messages.success(request, 'Video deleted successfully!')
+            return redirect('dashboard:video_management')
+
+        editing_video = None
+        if action == 'edit':
+            editing_video = self._find_video(request.POST.get('video_id'))
+            if editing_video is None:
+                messages.error(request, 'That video could not be found.')
+                return redirect('dashboard:video_management')
+
+        form = SimpleVideoUploadForm(request.POST, request.FILES, instance=editing_video)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                'Video updated successfully!' if editing_video else 'Video uploaded successfully!',
+            )
+            return redirect('dashboard:video_management')
+
+        messages.error(request, 'Could not save this video. Review the highlighted fields.')
+        return self._render(request, form, editing_video)
+
+    def _render(self, request, form, editing_video=None):
+        return render(request, self.template_name, {
+            'videos': CricketVideo.objects.filter(is_active=True).order_by('-created_at'),
+            'form': form,
+            'editing_video': editing_video,
+        })
+
+
+class ContactView(View):
+    """Public Contact Us page. Saves the submitted message to the admin inbox.
+
+    No login is required and no email is sent — the message is only stored.
+    """
+    template_name = 'pages/contact.html'
+
+    def get(self, request):
+        return render(request, self.template_name, {'form': ContactForm()})
+
+    def post(self, request):
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                'Thank you! Your message has been sent to our desk.',
+            )
+            return redirect('contact')
+        return render(request, self.template_name, {'form': form})
+
+
+class MessagesListView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Admin inbox listing every contact message (search, filter, paginate)."""
+    template_name = 'dashboard/messages_list.html'
+    paginate_by = 20
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def get(self, request):
+        from django.core.paginator import Paginator
+        from django.db.models import Q
+
+        qs = ContactMessage.objects.filter(is_deleted=False).order_by('-created_at')
+
+        query         = request.GET.get('q', '').strip()
+        status_filter = request.GET.get('status', 'all').strip()
+
+        if status_filter in ('read', 'unread'):
+            qs = qs.filter(is_read=(status_filter == 'read'))
+
+        if query:
+            qs = qs.filter(
+                Q(full_name__icontains=query)
+                | Q(email__icontains=query)
+                | Q(subject__icontains=query)
+            )
+
+        paginator = Paginator(qs, self.paginate_by)
+        page_obj  = paginator.get_page(request.GET.get('page', 1))
+
+        unread_messages_count = ContactMessage.objects.filter(
+            is_read=False, is_deleted=False
+        ).count()
+
+        return render(request, self.template_name, {
+            'page_obj':              page_obj,
+            'query':                 query,
+            'status_filter':         status_filter,
+            'unread_messages_count': unread_messages_count,
+        })
+
+
+class MessageDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Shows a single contact message and marks it read on first open."""
+    template_name = 'dashboard/message_detail.html'
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def get(self, request, pk):
+        msg = get_object_or_404(ContactMessage, pk=pk, is_deleted=False)
+        if not msg.is_read:
+            msg.is_read = True
+            msg.save(update_fields=['is_read'])
+        unread_messages_count = ContactMessage.objects.filter(
+            is_read=False, is_deleted=False
+        ).count()
+        return render(request, self.template_name, {
+            'msg':                   msg,
+            'unread_messages_count': unread_messages_count,
+        })
+
+
+class MessageActionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """POST-only: mark a contact message read/unread or (soft) delete it."""
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def post(self, request, pk):
+        msg    = get_object_or_404(ContactMessage, pk=pk, is_deleted=False)
+        action = request.POST.get('action')
+
+        if action == 'mark_read':
+            msg.is_read = True
+            msg.save(update_fields=['is_read'])
+            messages.success(request, 'Message marked as read.')
+        elif action == 'mark_unread':
+            msg.is_read = False
+            msg.save(update_fields=['is_read'])
+            messages.success(request, 'Message marked as unread.')
+        elif action == 'delete':
+            msg.is_deleted = True
+            msg.save(update_fields=['is_deleted'])
+            messages.success(request, 'Message deleted.')
+            return redirect('dashboard:messages_list')
+
+        return redirect('dashboard:message_detail', pk=pk)
+
+
+class PlayerRequestsView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    Admin list of all PlayerRegistrationRequest records.
+    Supports search, status filter, country filter and pagination.
+    """
+    template_name = 'dashboard/player_requests.html'
+    paginate_by = 20
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def get(self, request):
+        from apps.players.models import PlayerRegistrationRequest
+        from django.core.paginator import Paginator
+
+        qs = PlayerRegistrationRequest.objects.select_related('team').order_by('-submitted_at')
+
+        status_filter  = request.GET.get('status', 'pending').strip()
+        country_filter = request.GET.get('country', '').strip()
+        query          = request.GET.get('q', '').strip()
+
+        if status_filter in ('pending', 'approved', 'rejected'):
+            qs = qs.filter(status=status_filter)
+
+        if country_filter:
+            qs = qs.filter(country__icontains=country_filter)
+
+        if query:
+            qs = qs.filter(
+                Q(full_name__icontains=query)
+                | Q(mobile_number__icontains=query)
+                | Q(country__icontains=query)
+            )
+
+        paginator  = Paginator(qs, self.paginate_by)
+        page_obj   = paginator.get_page(request.GET.get('page', 1))
+
+        countries = (
+            PlayerRegistrationRequest.objects
+            .exclude(country='')
+            .values_list('country', flat=True)
+            .distinct()
+            .order_by('country')
+        )
+
+        pending_count = PlayerRegistrationRequest.objects.filter(
+            status=PlayerRegistrationRequest.Status.PENDING
+        ).count()
+
+        return render(request, self.template_name, {
+            'page_obj':       page_obj,
+            'status_filter':  status_filter,
+            'country_filter': country_filter,
+            'query':          query,
+            'countries':      countries,
+            'pending_count':  pending_count,
+            'status_choices': PlayerRegistrationRequest.Status.choices,
+        })
+
+
+class PlayerRequestDetailView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    Shows every field of a single PlayerRegistrationRequest.
+    Provides Accept and Reject buttons.
+    """
+    template_name = 'dashboard/player_request_detail.html'
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def get(self, request, pk):
+        from apps.players.models import PlayerRegistrationRequest
+        from django.shortcuts import get_object_or_404
+        req = get_object_or_404(
+            PlayerRegistrationRequest.objects.select_related('team', 'approved_player'),
+            pk=pk,
+        )
+        return render(request, self.template_name, {'req': req})
+
+
+class PlayerRequestActionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    POST-only.  Accepts or rejects a PlayerRegistrationRequest.
+
+    Accept:
+        - Creates a new Player from the request data.
+        - Sets request.status = approved and links request.approved_player.
+        - Player is immediately active and approved, visible everywhere.
+
+    Reject:
+        - Sets request.status = rejected + records rejection_date.
+        - No Player is ever created.
+        - Admin can reopen (approve) later; the form data is preserved.
+    """
+
+    def test_func(self):
+        u = self.request.user
+        return u.is_superuser or getattr(u, 'role', '') == CustomUser.Role.ADMIN
+
+    def post(self, request, pk):
+        from apps.players.models import Player, PlayerRegistrationRequest
+        from django.shortcuts import get_object_or_404
+        from django.utils import timezone
+
+        req    = get_object_or_404(PlayerRegistrationRequest, pk=pk)
+        action = request.POST.get('action')
+
+        if action == 'approve':
+            # Guard: do not create a duplicate Player if already approved
+            if req.status == PlayerRegistrationRequest.Status.APPROVED and req.approved_player:
+                messages.info(request, f'{req.full_name} is already approved.')
+                return redirect('dashboard:player_request_detail', pk=pk)
+
+            # Build and save the Player record
+            player = Player(
+                name          = req.full_name,
+                mobile_number = req.mobile_number,
+                email_address = req.email_address,
+                full_address  = req.full_address,
+                born_date     = req.date_of_birth,
+                jersey_number = req.jersey_number,
+                role          = req.playing_role,
+                batting_style = req.batting_style,
+                bowling_style = req.bowling_style,
+                primary_team  = req.team,
+                country       = req.country,
+                biography     = req.short_bio,
+                image         = req.photo,
+                # Immediately live
+                is_active            = True,
+                registration_status  = Player.RegistrationStatus.APPROVED,
+            )
+            player.save()
+
+            # Link request → player and mark approved
+            req.approved_player = player
+            req.status          = PlayerRegistrationRequest.Status.APPROVED
+            req.rejection_date  = None
+            req.save(update_fields=['approved_player', 'status', 'rejection_date', 'updated_at'])
+
+            messages.success(
+                request,
+                f'✅ {req.full_name} has been approved and is now visible on the website.',
+            )
+            return redirect('dashboard:player_requests')
+
+        elif action == 'reject':
+            req.status         = PlayerRegistrationRequest.Status.REJECTED
+            req.rejection_date = timezone.now()
+            req.save(update_fields=['status', 'rejection_date', 'updated_at'])
+            messages.warning(
+                request,
+                f'❌ {req.full_name} has been rejected and will not appear publicly.',
+            )
+            return redirect('dashboard:player_requests')
+
+        messages.error(request, 'Invalid action.')
+        return redirect('dashboard:player_request_detail', pk=pk)

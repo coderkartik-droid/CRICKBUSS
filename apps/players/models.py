@@ -5,6 +5,11 @@ from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
 class Player(models.Model):
+    class RegistrationStatus(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
+
     class Role(models.TextChoices):
         BATTER = 'batter', _('Top-order Batter')
         WICKET_KEEPER = 'wicketkeeper', _('Wicketkeeper Batter')
@@ -25,6 +30,12 @@ class Player(models.Model):
         LEFT_ORTHODOX = 'left_orthodox', _('Slow Left-arm Orthodox')
         LEFT_CHINAMAN = 'left_chinaman', _('Left-arm Unorthodox (Chinaman)')
         NONE = 'none', _('None / Non-Bowler')
+
+    class Gender(models.TextChoices):
+        MALE = 'male', _('Male')
+        FEMALE = 'female', _('Female')
+        OTHER = 'other', _('Other')
+        PREFER_NOT = 'prefer_not', _('Prefer not to say')
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(_('full player name'), max_length=120)
@@ -54,9 +65,29 @@ class Player(models.Model):
     achievements = models.TextField(_('career highlights & milestones'), blank=True)
     records = models.TextField(_('major records held'), blank=True)
 
+    # Contact & Personal
+    mobile_number = models.CharField(_('mobile number'), max_length=20, blank=True, unique=False)
+    email_address = models.EmailField(_('email address'), max_length=254, blank=True)
+    full_address = models.TextField(_('full address'), blank=True)
+    gender = models.CharField(_('gender'), max_length=20, choices=Gender.choices, blank=True)
+    state = models.CharField(_('state / province'), max_length=100, blank=True)
+    city = models.CharField(_('city'), max_length=100, blank=True)
+
+    # Additional
+    cricket_experience = models.TextField(_('cricket experience'), blank=True)
+    preferred_position = models.CharField(_('preferred playing position'), max_length=100, blank=True)
+
     # Status
     is_featured = models.BooleanField(_('featured player'), default=False)
     is_active = models.BooleanField(_('currently active'), default=True)
+    registration_status = models.CharField(
+        _('registration status'),
+        max_length=20,
+        choices=RegistrationStatus.choices,
+        default=RegistrationStatus.APPROVED,
+        db_index=True,
+    )
+    country = models.CharField(_('country'), max_length=80, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -68,6 +99,7 @@ class Player(models.Model):
             models.Index(fields=['slug']),
             models.Index(fields=['role']),
             models.Index(fields=['is_featured', 'is_active']),
+            models.Index(fields=['registration_status']),
         ]
 
     def save(self, *args, **kwargs):
@@ -154,3 +186,97 @@ class BowlingStat(models.Model):
 
     def __str__(self):
         return f"{self.player.name} - {self.format} Bowling"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Player Registration Request
+# A completely separate staging table for public submissions.
+# The Player table only ever receives records that an admin has approved.
+# ─────────────────────────────────────────────────────────────────────────────
+
+class PlayerRegistrationRequest(models.Model):
+    """
+    Holds every publicly submitted player registration until an admin
+    accepts or rejects it.  Accepting automatically creates a real Player;
+    the Player table itself is never polluted with pending/rejected data.
+    """
+
+    class Status(models.TextChoices):
+        PENDING  = 'pending',  _('Pending')
+        APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # ── Personal details ─────────────────────────────────────────────────
+    full_name      = models.CharField(_('full name'), max_length=120)
+    mobile_number  = models.CharField(_('mobile number'), max_length=20)
+    email_address  = models.EmailField(_('email address'), blank=True)
+    full_address   = models.TextField(_('full address'), blank=True)
+    date_of_birth  = models.DateField(_('date of birth'), null=True, blank=True)
+    jersey_number  = models.PositiveIntegerField(_('jersey number'), null=True, blank=True)
+
+    # ── Player details ────────────────────────────────────────────────────
+    photo          = models.ImageField(_('player photo'), upload_to='player_requests/photos/', blank=True, null=True)
+    country        = models.CharField(_('country'), max_length=80, blank=True)
+    state          = models.CharField(_('state / province'), max_length=100, blank=True)
+    city           = models.CharField(_('city'), max_length=100, blank=True)
+    playing_role   = models.CharField(
+        _('playing role'), max_length=30,
+        choices=Player.Role.choices, default=Player.Role.BATTER,
+    )
+    batting_style  = models.CharField(
+        _('batting style'), max_length=30,
+        choices=Player.BattingStyle.choices, default=Player.BattingStyle.RIGHT_HAND,
+    )
+    bowling_style  = models.CharField(
+        _('bowling style'), max_length=30,
+        choices=Player.BowlingStyle.choices, default=Player.BowlingStyle.NONE,
+    )
+    # Snapshot of the team name at submission time; also keep the FK if the
+    # team exists in the DB so the admin can see it clearly.
+    team = models.ForeignKey(
+        'teams.Team', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='player_requests',
+        verbose_name=_('team'),
+    )
+    team_name_raw  = models.CharField(_('team name (text)'), max_length=120, blank=True)
+
+    # ── Additional ────────────────────────────────────────────────────────
+    short_bio      = models.TextField(_('short bio'), blank=True)
+
+    # ── Workflow ──────────────────────────────────────────────────────────
+    status         = models.CharField(
+        _('status'), max_length=20,
+        choices=Status.choices, default=Status.PENDING,
+        db_index=True,
+    )
+    # FK to the Player that was created on approval (null until approved)
+    approved_player = models.OneToOneField(
+        Player, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='registration_request',
+        verbose_name=_('approved player'),
+    )
+    rejection_date  = models.DateTimeField(_('rejection date'), null=True, blank=True)
+    submitted_at    = models.DateTimeField(_('submitted at'), auto_now_add=True)
+    updated_at      = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name        = _('Player Registration Request')
+        verbose_name_plural = _('Player Registration Requests')
+        ordering            = ['-submitted_at']
+        indexes             = [
+            models.Index(fields=['status']),
+            models.Index(fields=['submitted_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.full_name} ({self.get_status_display()})"
+
+    def get_photo_url(self):
+        if self.photo and hasattr(self.photo, 'url'):
+            return self.photo.url
+        return (
+            f"https://ui-avatars.com/api/?name={self.full_name.replace(' ', '+')}"
+            f"&background=0f766e&color=ffffff&bold=true"
+        )

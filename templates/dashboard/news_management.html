@@ -1,150 +1,202 @@
 {% extends 'base.html' %}
+{% block title %}News Management — CRICKBUSS Admin{% endblock %}
 
-{% block title %}News Management - CRICKBUSS{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+<style>
+.news-img-preview{display:none;width:100%;height:130px;object-fit:cover;border-radius:10px;margin-top:.5rem;border:1.5px solid var(--border-light,#e5e7eb);}
+.article-thumb{width:52px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border-light,#e5e7eb);}
+.article-thumb-ph{width:52px;height:36px;border-radius:6px;background:var(--bg-subtle,#f3f4f6);display:flex;align-items:center;justify-content:center;color:var(--text-muted,#9ca3af);}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container af-page" style="max-width:1100px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <span class="current">News Management</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
     <div>
-      <h2 class="fw-bold mb-1">📰 News Management</h2>
-      <p class="text-muted mb-0">Create, edit, and manage cricket news articles</p>
+      <h1 class="af-page-title">
+        <span class="title-icon"><i class="fa-solid fa-newspaper"></i></span>
+        News Management
+      </h1>
+      <p class="af-page-desc">Publish, edit and manage cricket news articles for the website.</p>
     </div>
-    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Dashboard
+    </a>
   </div>
 
   <div class="row g-4">
-    <!-- News Creation Form -->
+
+    <!-- ═══ LEFT: Form ═══ -->
     <div class="col-lg-4">
-      <div class="content-card p-4">
-        <h5 class="fw-bold mb-3">
-          <i class="fa-solid fa-newspaper me-2" style="color: var(--primary);"></i>
-          {% if editing_news %}Edit News Article{% else %}Publish New Article{% endif %}
-        </h5>
-        
-        <form method="post" action="{% url 'dashboard:news_management' %}" enctype="multipart/form-data" class="management-form" novalidate>
+      <div class="af-card" style="position:sticky;top:80px;">
+        <div class="af-section-head">
+          <span class="af-section-icon" style="background:var(--primary);">
+            <i class="fa-solid fa-pen-nib"></i>
+          </span>
+          <span id="formHeading">{% if editing_news %}Edit Article{% else %}Publish New Article{% endif %}</span>
+        </div>
+
+        <form method="post" action="{% url 'dashboard:news_management' %}"
+              enctype="multipart/form-data" class="management-form" novalidate id="newsForm">
           {% csrf_token %}
-          <input type="hidden" name="action" value="{% if editing_news %}edit{% else %}create{% endif %}">
+          <input type="hidden" name="action" id="newsAction" value="{% if editing_news %}edit{% else %}create{% endif %}">
           {% if editing_news %}
-          <input type="hidden" name="news_id" value="{{ editing_news.id }}">
+            <input type="hidden" name="news_id" id="newsId" value="{{ editing_news.id }}">
+          {% else %}
+            <input type="hidden" name="news_id" id="newsId" value="">
           {% endif %}
-          
+
           {% if form.non_field_errors %}
-          <div class="alert alert-danger" role="alert">
-            <strong>Could not save article.</strong>
-            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+          <div class="alert alert-danger rounded-3 d-flex gap-2 mb-3" role="alert">
+            <i class="fa-solid fa-circle-exclamation flex-shrink-0 mt-1"></i>
+            <div>{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
           </div>
           {% endif %}
-          
-          <div class="form-section">
-            <div class="form-field">
-              <label class="form-label" for="{{ form.author_name_fallback.id_for_label }}">{{ form.author_name_fallback.label }} <span class="required-mark">*</span></label>
-              {{ form.author_name_fallback }}
-              {% if form.author_name_fallback.errors %}
-              <div class="text-danger small mt-1">
-                {% for error in form.author_name_fallback.errors %}<div>{{ error }}</div>{% endfor %}
-              </div>
-              {% endif %}
-              <div class="form-text">Enter the author's name</div>
-            </div>
-            
-            <div class="form-field">
-              <label class="form-label" for="{{ form.featured_image.id_for_label }}">{{ form.featured_image.label }}</label>
-              {{ form.featured_image }}
-              {% if form.featured_image.errors %}
-              <div class="text-danger small mt-1">
-                {% for error in form.featured_image.errors %}<div>{{ error }}</div>{% endfor %}
-              </div>
-              {% endif %}
-              <div class="form-text">Optional featured image (PNG, JPG, or WEBP)</div>
-            </div>
-            
-            <div class="form-field">
-              <label class="form-label" for="{{ form.title.id_for_label }}">{{ form.title.label }} <span class="required-mark">*</span></label>
-              {{ form.title }}
-              {% if form.title.errors %}
-              <div class="text-danger small mt-1">
-                {% for error in form.title.errors %}<div>{{ error }}</div>{% endfor %}
-              </div>
-              {% endif %}
-              <div class="form-text">Enter a catchy headline for the article</div>
-            </div>
-            
-            <div class="form-field">
-              <label class="form-label" for="{{ form.content.id_for_label }}">{{ form.content.label }} <span class="required-mark">*</span></label>
-              {{ form.content }}
-              {% if form.content.errors %}
-              <div class="text-danger small mt-1">
-                {% for error in form.content.errors %}<div>{{ error }}</div>{% endfor %}
-              </div>
-              {% endif %}
-              <div class="form-text">Write the article content (plain text or HTML supported)</div>
-            </div>
-          </div>
-          
-          <div class="form-actions">
-            <button type="submit" class="btn btn-emerald w-100">
-              <i class="fa-solid fa-paper-plane me-2"></i>
-              {% if editing_news %}Update Article{% else %}Publish Article{% endif %}
-            </button>
-            {% if editing_news %}
-            <a href="{% url 'dashboard:news_management' %}" class="btn btn-ghost w-100 mt-2">Cancel</a>
+
+          <!-- Author -->
+          <div class="af-field">
+            <label class="af-label" for="{{ form.author_name_fallback.id_for_label }}">
+              <i class="fa-solid fa-user-pen me-1" style="color:var(--primary);"></i>
+              {{ form.author_name_fallback.label }}<span class="req">*</span>
+            </label>
+            {{ form.author_name_fallback }}
+            {% if form.author_name_fallback.errors %}
+              <div class="af-error"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.author_name_fallback.errors %}{{ e }}{% endfor %}</span></div>
             {% endif %}
+            <div class="af-hint">Name displayed alongside the article.</div>
+          </div>
+
+          <!-- Featured Image -->
+          <div class="af-field">
+            <label class="af-label" for="{{ form.featured_image.id_for_label }}">
+              <i class="fa-solid fa-image me-1" style="color:var(--primary);"></i>
+              {{ form.featured_image.label }}
+              <span class="opt">(optional)</span>
+            </label>
+            <div class="af-upload-zone" id="newsImgZone">
+              <input type="file" name="{{ form.featured_image.html_name }}"
+                     id="{{ form.featured_image.id_for_label }}"
+                     accept="image/*" onchange="previewNewsImg(this)">
+              <div id="newsImgPlaceholder">
+                <i class="fa-solid fa-cloud-arrow-up af-upload-icon"></i>
+                <div class="af-upload-label">Click or drag image here</div>
+                <div class="af-upload-hint">PNG · JPG · WEBP · max 5 MB</div>
+              </div>
+              <div class="af-upload-filename" id="newsImgName"></div>
+            </div>
+            <img src="" alt="" class="news-img-preview" id="newsImgPreview">
+            {% if form.featured_image.errors %}
+              <div class="af-error mt-1"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.featured_image.errors %}{{ e }}{% endfor %}</span></div>
+            {% endif %}
+          </div>
+
+          <!-- Title -->
+          <div class="af-field">
+            <label class="af-label" for="{{ form.title.id_for_label }}">
+              <i class="fa-solid fa-heading me-1" style="color:var(--primary);"></i>
+              {{ form.title.label }}<span class="req">*</span>
+            </label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <div class="af-error"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.title.errors %}{{ e }}{% endfor %}</span></div>
+            {% endif %}
+            <div class="af-hint">A clear, engaging headline.</div>
+          </div>
+
+          <!-- Content -->
+          <div class="af-field">
+            <label class="af-label" for="{{ form.content.id_for_label }}">
+              <i class="fa-solid fa-align-left me-1" style="color:var(--primary);"></i>
+              {{ form.content.label }}<span class="req">*</span>
+            </label>
+            {{ form.content }}
+            {% if form.content.errors %}
+              <div class="af-error"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.content.errors %}{{ e }}{% endfor %}</span></div>
+            {% endif %}
+            <div class="af-hint">Plain text or basic HTML supported.</div>
+          </div>
+
+          <!-- Actions -->
+          <div class="af-actions">
+            <button type="submit" class="btn btn-emerald">
+              <i class="fa-solid fa-paper-plane me-2"></i>
+              <span id="submitLabel">{% if editing_news %}Update Article{% else %}Publish Article{% endif %}</span>
+            </button>
+            <a href="{% url 'dashboard:news_management' %}" id="cancelBtn"
+               class="btn btn-ghost {% if not editing_news %}d-none{% endif %}">
+              <i class="fa-solid fa-xmark me-1"></i>Cancel
+            </a>
           </div>
         </form>
       </div>
-    </div>
+    </div><!-- /col-lg-4 -->
 
-    <!-- News Articles List -->
+    <!-- ═══ RIGHT: Articles table ═══ -->
     <div class="col-lg-8">
-      <div class="content-card p-4">
-        <h5 class="fw-bold mb-3">
-          <i class="fa-solid fa-newspaper me-2" style="color: var(--primary);"></i>
-          All Articles ({{ news_articles.count }})
-        </h5>
-        
+      <div class="af-table-card">
+        <div class="af-table-header">
+          <p class="af-table-title mb-0">
+            <i class="fa-solid fa-list me-1" style="color:var(--primary);"></i>
+            All Articles
+            <span class="badge bg-secondary rounded-pill ms-1" style="font-size:.72rem;">{{ news_articles.count }}</span>
+          </p>
+        </div>
+
         {% if news_articles %}
-        <div class="table-responsive">
-          <table class="table sports-table align-middle">
+        <div class="table-responsive af-table">
+          <table class="table mb-0">
             <thead>
               <tr>
                 <th>Image</th>
                 <th>Title</th>
                 <th>Author</th>
                 <th>Published</th>
-                <th>Actions</th>
+                <th class="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for article in news_articles %}
               <tr>
-                <td style="width: 80px;">
+                <td>
                   {% if article.featured_image %}
-                  <img src="{{ article.featured_image.url }}" alt="{{ article.title }}" class="rounded" style="width: 60px; height: 40px; object-fit: cover;">
+                    <img src="{{ article.featured_image.url }}" alt="{{ article.title }}" class="article-thumb">
                   {% else %}
-                  <div class="bg-subtle rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 40px;">
-                    <i class="fa-solid fa-image text-muted"></i>
-                  </div>
+                    <div class="article-thumb-ph"><i class="fa-solid fa-image" style="font-size:.85rem;"></i></div>
                   {% endif %}
                 </td>
                 <td>
-                  <div class="fw-semibold text-truncate" style="max-width: 200px;">{{ article.title }}</div>
+                  <div class="fw-semibold" style="font-size:.88rem;max-width:240px;" class="text-truncate">{{ article.title }}</div>
                   {% if article.is_breaking %}
-                  <span class="badge bg-danger text-white badge-live-custom rounded-pill mt-1">Breaking</span>
+                    <span class="af-badge af-badge-warning mt-1"><i class="fa-solid fa-bolt"></i>Breaking</span>
                   {% endif %}
                 </td>
-                <td>{{ article.author_name_fallback }}</td>
-                <td class="text-muted small">{{ article.published_at|date:"M d, Y H:i" }}</td>
-                <td>
-                  <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="editNews('{{ article.id }}')">
-                      <i class="fa-solid fa-pen"></i>
+                <td style="font-size:.85rem;">{{ article.author_name_fallback }}</td>
+                <td class="text-muted" style="font-size:.8rem;white-space:nowrap;">{{ article.published_at|date:"M d, Y" }}</td>
+                <td class="text-end">
+                  <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                            style="padding:.25rem .7rem;font-size:.78rem;"
+                            onclick="editNews('{{ article.id }}','{{ article.title|escapejs }}','{{ article.author_name_fallback|escapejs }}')">
+                      <i class="fa-solid fa-pen me-1"></i>Edit
                     </button>
-                    <form method="post" action="{% url 'dashboard:news_management' %}" onsubmit="return confirm('Are you sure you want to delete this article?');" class="d-inline">
+                    <form method="post" action="{% url 'dashboard:news_management' %}"
+                          onsubmit="return confirm('Delete this article permanently?');" class="d-inline">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="news_id" value="{{ article.id }}">
-                      <button type="submit" class="btn btn-sm btn-outline-danger">
-                        <i class="fa-solid fa-trash"></i>
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"
+                              style="padding:.25rem .7rem;font-size:.78rem;">
+                        <i class="fa-solid fa-trash me-1"></i>Delete
                       </button>
                     </form>
                   </div>
@@ -155,32 +207,69 @@
           </table>
         </div>
         {% else %}
-        <div class="text-center py-5">
-          <i class="fa-solid fa-newspaper fa-3x text-muted mb-3"></i>
-          <p class="text-muted">No news articles published yet</p>
-          <p class="text-muted small">Publish your first cricket news article using the form</p>
+        <div class="af-empty">
+          <div class="af-empty-icon"><i class="fa-solid fa-newspaper"></i></div>
+          <h5>No articles published yet</h5>
+          <p>Use the form on the left to publish your first cricket article.</p>
         </div>
         {% endif %}
       </div>
-    </div>
-  </div>
+    </div><!-- /col-lg-8 -->
+
+  </div><!-- /row -->
 </div>
 
+{% block extra_js %}
 <script>
-function editNews(newsId) {
-  // Set form to edit mode - user will edit all fields
-  const form = document.querySelector('.management-form');
-  form.querySelector('input[name="action"]').value = 'edit';
-  form.querySelector('input[name="news_id"]').value = newsId;
-  
-  // Clear the form for fresh input
-  form.querySelector('input[name="author_name_fallback"]').value = '';
-  form.querySelector('input[type="file"]').value = '';
-  form.querySelector('input[name="title"]').value = '';
-  form.querySelector('textarea[name="content"]').value = '';
-  
-  // Scroll to form
-  form.scrollIntoView({ behavior: 'smooth' });
+/* Image preview */
+function previewNewsImg(input) {
+  const prev  = document.getElementById('newsImgPreview');
+  const ph    = document.getElementById('newsImgPlaceholder');
+  const fname = document.getElementById('newsImgName');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      prev.src = e.target.result;
+      prev.style.display = 'block';
+      ph.style.display   = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+    fname.textContent = input.files[0].name;
+    fname.style.display = 'block';
+  }
 }
+
+/* Edit mode */
+function editNews(id, title, author) {
+  document.getElementById('newsAction').value  = 'edit';
+  document.getElementById('newsId').value      = id;
+  document.getElementById('formHeading').textContent  = 'Edit Article';
+  document.getElementById('submitLabel').textContent  = 'Update Article';
+  document.getElementById('cancelBtn').classList.remove('d-none');
+
+  const form = document.getElementById('newsForm');
+  const tf   = form.querySelector('[name="title"]');
+  const af   = form.querySelector('[name="author_name_fallback"]');
+  const cf   = form.querySelector('[name="content"]');
+  if (tf) tf.value = title;
+  if (af) af.value = author;
+  if (cf) cf.value = '';
+
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* Drag-over visual */
+(function(){
+  const z = document.getElementById('newsImgZone');
+  if (!z) return;
+  z.addEventListener('dragover',  e => { e.preventDefault(); z.classList.add('drag-over'); });
+  z.addEventListener('dragleave', ()  => z.classList.remove('drag-over'));
+  z.addEventListener('drop',      e => {
+    e.preventDefault(); z.classList.remove('drag-over');
+    const fi = z.querySelector('input[type=file]');
+    if (fi && e.dataTransfer.files.length) { fi.files = e.dataTransfer.files; previewNewsImg(fi); }
+  });
+})();
 </script>
+{% endblock %}
 {% endblock %}

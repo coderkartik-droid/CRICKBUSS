@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Message — CRICKBUSS Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+{% endblock %}
+
+{% block content %}
+<div class="container af-page" style="max-width:900px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <a href="{% url 'dashboard:messages_list' %}">Messages</a>
+    <span class="sep">›</span>
+    <span class="current">Message</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
+    <div>
+      <h1 class="af-page-title">
+        <span class="title-icon"><i class="fa-solid fa-envelope-open-text"></i></span>
+        Message Detail
+        {% if msg.is_read %}
+          <span class="af-badge af-badge-info ms-2" style="font-size:.78rem;"><i class="fa-solid fa-envelope-open"></i>Read</span>
+        {% else %}
+          <span class="af-badge af-badge-pending ms-2" style="font-size:.78rem;"><i class="fa-solid fa-envelope"></i>Unread</span>
+        {% endif %}
+      </h1>
+      <p class="af-page-desc">Full details of this contact message.</p>
+    </div>
+    <a href="{% url 'dashboard:messages_list' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Back to Inbox
+    </a>
+  </div>
+
+  <!-- Message info -->
+  <div class="af-card mb-4">
+    <div class="af-section-head">
+      <span class="af-section-icon" style="background:#0ea5e9;"><i class="fa-solid fa-circle-info"></i></span>
+      Message Information
+    </div>
+
+    <div class="af-grid-2">
+      <div class="af-field">
+        <div class="af-label">Full Name</div>
+        <div style="font-size:.92rem;">{{ msg.full_name }}</div>
+      </div>
+      <div class="af-field">
+        <div class="af-label">Mobile Number</div>
+        <div style="font-size:.92rem;">{{ msg.mobile_number|default:"—" }}</div>
+      </div>
+      <div class="af-field">
+        <div class="af-label">Email</div>
+        <div style="font-size:.92rem;"><a href="mailto:{{ msg.email }}">{{ msg.email }}</a></div>
+      </div>
+      <div class="af-field">
+        <div class="af-label">Subject</div>
+        <div style="font-size:.92rem;">{{ msg.subject }}</div>
+      </div>
+      <div class="af-field af-col-span-2">
+        <div class="af-label">Message</div>
+        <div style="font-size:.92rem;white-space:pre-wrap;line-height:1.65;">{{ msg.message }}</div>
+      </div>
+      <div class="af-field af-col-span-2">
+        <div class="af-label">Date &amp; Time</div>
+        <div style="font-size:.92rem;">{{ msg.created_at|date:"M d, Y H:i" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="af-actions d-flex flex-wrap gap-2">
+    <form method="post" action="{% url 'dashboard:message_action' pk=msg.pk %}" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="mark_read">
+      <button type="submit" class="btn btn-outline-success rounded-pill" {% if msg.is_read %}disabled{% endif %}>
+        <i class="fa-solid fa-envelope-open me-1"></i>Mark as Read
+      </button>
+    </form>
+
+    <form method="post" action="{% url 'dashboard:message_action' pk=msg.pk %}" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="mark_unread">
+      <button type="submit" class="btn btn-outline-secondary rounded-pill" {% if not msg.is_read %}disabled{% endif %}>
+        <i class="fa-solid fa-envelope me-1"></i>Mark as Unread
+      </button>
+    </form>
+
+    <form method="post" action="{% url 'dashboard:message_action' pk=msg.pk %}" class="d-inline"
+          onsubmit="return confirm('Delete this message permanently?');">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete">
+      <button type="submit" class="btn btn-outline-danger rounded-pill">
+        <i class="fa-solid fa-trash me-1"></i>Delete
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

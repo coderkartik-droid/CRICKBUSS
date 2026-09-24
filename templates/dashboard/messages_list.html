@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Messages — CRICKBUSS Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+{% endblock %}
+
+{% block content %}
+<div class="container af-page" style="max-width:1100px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <span class="current">Messages</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
+    <div>
+      <h1 class="af-page-title">
+        <span class="title-icon"><i class="fa-solid fa-envelope"></i></span>
+        Messages
+        {% if unread_messages_count > 0 %}
+          <span class="af-badge af-badge-pending ms-2" style="font-size:.78rem;">
+            <i class="fa-solid fa-envelope-circle-check"></i>{{ unread_messages_count }} unread
+          </span>
+        {% endif %}
+      </h1>
+      <p class="af-page-desc">Contact messages submitted by visitors through the public Contact Us form.</p>
+    </div>
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Dashboard
+    </a>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="af-card mb-4" style="padding:1.25rem 1.5rem;">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-sm-8 col-lg-7">
+        <label class="af-label mb-1"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</label>
+        <div class="af-search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="q" value="{{ query }}" placeholder="Search by name, email or subject…">
+        </div>
+      </div>
+      <div class="col-6 col-sm-4 col-lg-2">
+        <label class="af-label mb-1">Status</label>
+        <select name="status" class="form-select form-select-sm" style="border-radius:10px;border-width:1.5px;font-size:.85rem;">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+          <option value="unread" {% if status_filter == 'unread' %}selected{% endif %}>Unread</option>
+          <option value="read" {% if status_filter == 'read' %}selected{% endif %}>Read</option>
+        </select>
+      </div>
+      <div class="col-6 col-lg-3 d-flex gap-2">
+        <button type="submit" class="btn btn-emerald btn-sm rounded-pill px-4">
+          <i class="fa-solid fa-filter me-1"></i>Apply
+        </button>
+        <a href="{% url 'dashboard:messages_list' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+          <i class="fa-solid fa-rotate me-1"></i>Clear
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results -->
+  <div class="af-table-card">
+    {% if page_obj.object_list %}
+    <div class="table-responsive af-table">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Mobile</th>
+            <th>Email</th>
+            <th>Subject</th>
+            <th>Date &amp; Time</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for msg in page_obj %}
+          <tr {% if not msg.is_read %}style="font-weight:600;"{% endif %}>
+            <td>
+              <div class="fw-semibold" style="font-size:.88rem;">{{ msg.full_name }}</div>
+            </td>
+            <td style="font-size:.82rem;font-family:monospace;white-space:nowrap;">{{ msg.mobile_number|default:"—" }}</td>
+            <td style="font-size:.82rem;font-family:monospace;white-space:nowrap;">{{ msg.email }}</td>
+            <td>
+              <div class="text-truncate" style="max-width:220px;font-size:.85rem;">{{ msg.subject }}</div>
+            </td>
+            <td style="font-size:.8rem;white-space:nowrap;color:var(--text-muted,#6b7280);">
+              {{ msg.created_at|date:"M d, Y" }}<br>
+              <span style="font-size:.72rem;">{{ msg.created_at|date:"H:i" }}</span>
+            </td>
+            <td>
+              {% if msg.is_read %}
+                <span class="af-badge af-badge-info"><i class="fa-solid fa-envelope-open"></i>Read</span>
+              {% else %}
+                <span class="af-badge af-badge-pending"><i class="fa-solid fa-envelope"></i>Unread</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'dashboard:message_detail' pk=msg.pk %}"
+                 class="btn btn-sm btn-outline-secondary rounded-pill"
+                 style="font-size:.78rem;padding:.3rem .8rem;">
+                <i class="fa-solid fa-eye me-1"></i>View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2">
+      <small class="text-muted">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        of {{ page_obj.paginator.count }} message{{ page_obj.paginator.count|pluralize }}
+      </small>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link rounded-start" href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&q={{ query }}">&laquo;</a>
+            </li>
+          {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}&status={{ status_filter }}&q={{ query }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link rounded-end" href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&q={{ query }}">&raquo;</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="af-empty">
+      <div class="af-empty-icon"><i class="fa-solid fa-inbox"></i></div>
+      {% if query or status_filter != 'all' %}
+        <h5>No messages found</h5>
+        <p>Try adjusting your search query or status filter.</p>
+        <a href="{% url 'dashboard:messages_list' %}" class="btn btn-ghost btn-sm rounded-pill mt-2 px-4">
+          <i class="fa-solid fa-rotate me-1"></i>Reset Filters
+        </a>
+      {% else %}
+        <h5>No messages yet</h5>
+        <p>Contact form submissions from visitors will appear here.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

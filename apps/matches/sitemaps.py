@@ -55,7 +55,10 @@ class PlayerSitemap(Sitemap):
     priority = 0.7
 
     def items(self):
-        return Player.objects.filter(is_active=True)
+        return Player.objects.filter(
+            is_active=True,
+            registration_status=Player.RegistrationStatus.APPROVED,
+        )
 
 
 class NewsSitemap(Sitemap):

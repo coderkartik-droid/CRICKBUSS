@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Scorer Dashboard - CRICKBUSS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+      <span class="badge badge-premium mb-2">SCORER PANEL</span>
+      <h1 class="fw-bold mb-1">Assigned Matches</h1>
+      <p class="text-muted mb-0">Matches assigned to {{ user.get_full_name }}.</p>
+    </div>
+    <div class="content-card px-3 py-2">
+      <span class="text-muted small">Total assigned</span>
+      <strong class="d-block fs-4">{{ assigned_matches|length }}</strong>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {% for match in assigned_matches %}
+      <div class="col-lg-6">
+        <article class="content-card h-100 p-4">
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+              <span class="badge bg-secondary text-light text-uppercase mb-2">{{ match.get_match_type_display }}</span>
+              <h2 class="h5 fw-bold mb-0">{{ match.team1.name }} <span class="text-muted">vs</span> {{ match.team2.name }}</h2>
+            </div>
+            <span class="badge {% if match.status == 'live' %}badge-live-custom{% elif match.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ match.get_status_display }}
+            </span>
+          </div>
+
+          <dl class="row small mb-4">
+            <dt class="col-sm-4 text-muted">Tournament</dt>
+            <dd class="col-sm-8">{{ match.tournament.name|default:"Not assigned" }}</dd>
+            <dt class="col-sm-4 text-muted">Ground</dt>
+            <dd class="col-sm-8">{{ match.ground.name|default:match.venue.name|default:"Not assigned" }}</dd>
+            <dt class="col-sm-4 text-muted">Match date</dt>
+            <dd class="col-sm-8">{{ match.start_datetime|date:"d M Y" }}</dd>
+            <dt class="col-sm-4 text-muted">Match time</dt>
+            <dd class="col-sm-8">{{ match.start_datetime|date:"H:i" }}</dd>
+          </dl>
+
+          <div class="d-flex gap-2">
+            <a href="{% url 'matches:match_scorer' slug=match.slug %}" class="btn btn-emerald flex-fill">
+              <i class="fa-solid fa-play me-2"></i> Start Scoring
+            </a>
+            <a href="{% url 'matches:assign_playing_xi' slug=match.slug %}" class="btn btn-outline-emerald flex-fill">
+              <i class="fa-solid fa-people-group me-2"></i> Assign Playing XI
+            </a>
+          </div>
+        </article>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="content-card p-5 text-center">
+          <i class="fa-solid fa-calendar-xmark fs-1 text-muted mb-3"></i>
+          <h2 class="h5 fw-bold">No matches assigned</h2>
+          <p class="text-muted mb-0">Assigned matches will appear here when an administrator adds you.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

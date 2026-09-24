@@ -1,0 +1,10 @@
+﻿/* Public navigation component. Detailed breakpoint rules remain in responsive.css. */
+.navbar-custom,
+.navbar-custom > .container,
+.navbar-brand-custom,
+.nav-link-custom { min-width: 0; }
+.navbar-custom > .container { display: flex; align-items: center; justify-content: space-between; }
+.navbar-brand-custom { display: inline-flex; align-items: center; flex-shrink: 0; }
+.nav-link-custom { white-space: nowrap; }
+.navbar-custom .navbar-nav { flex-wrap: nowrap; }
+.navbar-custom .form-control { max-width: 100%; }

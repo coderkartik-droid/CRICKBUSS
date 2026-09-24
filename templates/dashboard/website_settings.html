@@ -1,147 +1,123 @@
 {% extends 'base.html' %}
+{% block title %}Website Settings — CRICKBUSS Admin{% endblock %}
 
-{% block title %}Website Customization & Branding Settings - CrickScore Live{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+<style>
+.social-icon{width:28px;text-align:center;flex-shrink:0;font-size:1rem;}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container af-page" style="max-width:960px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <span class="current">Website Settings</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
     <div>
-      <h3 class="fw-bold mb-1"><i class="fa-solid fa-palette text-emerald me-2"></i>Website Customization</h3>
-      <p class="text-muted small mb-0">Update platform brand identity, colors, banners, and contact information without editing code.</p>
+      <h1 class="af-page-title">
+        <span class="title-icon" style="background:#7c3aed;"><i class="fa-solid fa-gear"></i></span>
+        Website Settings
+      </h1>
+      <p class="af-page-desc">Manage your About Us text, social media links and public contact information.</p>
     </div>
-    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-      <i class="fa-solid fa-arrow-left me-1"></i> Admin Portal
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Dashboard
     </a>
   </div>
 
-  <form method="POST" enctype="multipart/form-data">
+  <form method="POST" novalidate>
     {% csrf_token %}
 
-    <div class="row g-4">
-      <!-- Branding & Colors -->
-      <div class="col-lg-6">
-        <div class="content-card p-4 h-100">
-          <h5 class="fw-bold mb-3 border-bottom pb-2">Brand Identity & Color Scheme</h5>
+    <!-- ── Section 1: About Us ── -->
+    <div class="af-card">
+      <div class="af-section-head">
+        <span class="af-section-icon" style="background:#7c3aed;"><i class="fa-solid fa-circle-info"></i></span>
+        About Us
+      </div>
+      <div class="af-field">
+        <label class="af-label" for="id_about_us">About Us Description</label>
+        <textarea name="about_us" id="id_about_us" rows="6" class="form-control"
+                  placeholder="Write a short description about your platform…">{{ setting.about_us }}</textarea>
+        <div class="af-hint">This description is used on the public website.</div>
+      </div>
+    </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Platform Name</label>
-            <input type="text" name="site_name" class="form-control" value="{{ setting.site_name }}" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Site Tagline</label>
-            <input type="text" name="site_tagline" class="form-control" value="{{ setting.site_tagline }}">
-          </div>
-
-          <div class="row g-3 mb-3">
-            <div class="col-6">
-              <label class="form-label fw-semibold small">Primary Theme Color</label>
-              <div class="input-group">
-                <input type="color" name="primary_color" class="form-control form-control-color" value="{{ setting.primary_color }}" style="width:50px;">
-                <input type="text" class="form-control font-monospace" value="{{ setting.primary_color }}" readonly>
-              </div>
-            </div>
-            <div class="col-6">
-              <label class="form-label fw-semibold small">Secondary Accent Color</label>
-              <div class="input-group">
-                <input type="color" name="secondary_color" class="form-control form-control-color" value="{{ setting.secondary_color }}" style="width:50px;">
-                <input type="text" class="form-control font-monospace" value="{{ setting.secondary_color }}" readonly>
-              </div>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Custom Logo Image</label>
-            {% if setting.logo %}
-              <div class="mb-2"><img src="{{ setting.logo.url }}" alt="Current Logo" style="height:38px;"></div>
-            {% endif %}
-            <input type="file" name="logo" class="form-control" accept="image/*">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Custom Favicon Image</label>
-            {% if setting.favicon %}
-              <div class="mb-2"><img src="{{ setting.favicon.url }}" alt="Current Favicon" style="width:24px;height:24px;"></div>
-            {% endif %}
-            <input type="file" name="favicon" class="form-control" accept="image/*">
-          </div>
+    <!-- ── Section 2: Social Media Links ── -->
+    <div class="af-card">
+      <div class="af-section-head">
+        <span class="af-section-icon" style="background:#1d4ed8;"><i class="fa-solid fa-share-nodes"></i></span>
+        Social Media Links
+      </div>
+      <div class="af-grid-2">
+        <div class="af-field">
+          <label class="af-label">
+            <i class="fa-brands fa-facebook social-icon" style="color:#1877f2;"></i>Facebook URL
+          </label>
+          <input type="url" name="facebook_url" class="form-control" value="{{ setting.facebook_url }}" placeholder="https://facebook.com/…">
+        </div>
+        <div class="af-field">
+          <label class="af-label">
+            <i class="fa-brands fa-instagram social-icon" style="color:#e1306c;"></i>Instagram URL
+          </label>
+          <input type="url" name="instagram_url" class="form-control" value="{{ setting.instagram_url }}" placeholder="https://instagram.com/…">
+        </div>
+        <div class="af-field">
+          <label class="af-label">
+            <i class="fa-brands fa-youtube social-icon" style="color:#ff0000;"></i>YouTube URL
+          </label>
+          <input type="url" name="youtube_url" class="form-control" value="{{ setting.youtube_url }}" placeholder="https://youtube.com/…">
+        </div>
+        <div class="af-field">
+          <label class="af-label">
+            <i class="fa-brands fa-x-twitter social-icon"></i>X (Twitter) URL
+          </label>
+          <input type="url" name="twitter_url" class="form-control" value="{{ setting.twitter_url }}" placeholder="https://x.com/…">
         </div>
       </div>
+    </div>
 
-      <!-- Hero Banner & Homepage -->
-      <div class="col-lg-6">
-        <div class="content-card p-4 h-100">
-          <h5 class="fw-bold mb-3 border-bottom pb-2">Hero Banner & Visuals</h5>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Hero Banner Title</label>
-            <input type="text" name="banner_title" class="form-control" value="{{ setting.banner_title }}">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Hero Banner Subtitle</label>
-            <textarea name="banner_subtitle" rows="3" class="form-control">{{ setting.banner_subtitle }}</textarea>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Hero Background Image</label>
-            {% if setting.banner_image %}
-              <div class="mb-2"><img src="{{ setting.banner_image.url }}" alt="Banner" style="height:70px;border-radius:8px;object-fit:cover;"></div>
-            {% endif %}
-            <input type="file" name="banner_image" class="form-control" accept="image/*">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold small">Footer Copyright Text</label>
-            <textarea name="footer_text" rows="2" class="form-control">{{ setting.footer_text }}</textarea>
-          </div>
+    <!-- ── Section 3: Contact Information ── -->
+    <div class="af-card">
+      <div class="af-section-head">
+        <span class="af-section-icon" style="background:#0891b2;"><i class="fa-solid fa-address-book"></i></span>
+        Contact Information
+      </div>
+      <div class="af-grid-3">
+        <div class="af-field">
+          <label class="af-label" for="id_contact_email">Contact Email</label>
+          <input type="email" name="contact_email" id="id_contact_email" class="form-control" value="{{ setting.contact_email }}">
+        </div>
+        <div class="af-field">
+          <label class="af-label" for="id_contact_phone">Contact Phone Number</label>
+          <input type="text" name="contact_phone" id="id_contact_phone" class="form-control" value="{{ setting.contact_phone }}">
+        </div>
+        <div class="af-field">
+          <label class="af-label" for="id_address">Contact Address</label>
+          <input type="text" name="address" id="id_address" class="form-control" value="{{ setting.address }}">
         </div>
       </div>
+    </div>
 
-      <!-- Contact & Social Media Links -->
-      <div class="col-12">
-        <div class="content-card p-4">
-          <h5 class="fw-bold mb-3 border-bottom pb-2">Contact Info & Social Handles</h5>
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label fw-semibold small">Official Email</label>
-              <input type="email" name="contact_email" class="form-control" value="{{ setting.contact_email }}">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label fw-semibold small">Support Phone</label>
-              <input type="text" name="contact_phone" class="form-control" value="{{ setting.contact_phone }}">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label fw-semibold small">Headquarters Address</label>
-              <input type="text" name="address" class="form-control" value="{{ setting.address }}">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small"><i class="fa-brands fa-facebook text-primary me-1"></i>Facebook</label>
-              <input type="url" name="facebook_url" class="form-control" value="{{ setting.facebook_url }}">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small"><i class="fa-brands fa-x-twitter me-1"></i>Twitter / X</label>
-              <input type="url" name="twitter_url" class="form-control" value="{{ setting.twitter_url }}">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small"><i class="fa-brands fa-instagram text-danger me-1"></i>Instagram</label>
-              <input type="url" name="instagram_url" class="form-control" value="{{ setting.instagram_url }}">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small"><i class="fa-brands fa-youtube text-danger me-1"></i>YouTube</label>
-              <input type="url" name="youtube_url" class="form-control" value="{{ setting.youtube_url }}">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Submit Action -->
-      <div class="col-12 text-end">
-        <button type="submit" class="btn btn-emerald px-5 py-2 fw-bold shadow-sm">
-          <i class="fa-solid fa-floppy-disk me-1"></i> Save Customizations
+    <!-- ── Save bar ── -->
+    <div class="af-card" style="padding:1.1rem 1.5rem;">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <p class="text-muted small mb-0">
+          <i class="fa-solid fa-circle-info me-1"></i>
+          All changes take effect immediately on the live website.
+        </p>
+        <button type="submit" class="btn btn-emerald px-5 fw-bold rounded-pill" style="height:42px;">
+          <i class="fa-solid fa-floppy-disk me-2"></i>Save Settings
         </button>
       </div>
     </div>
+
   </form>
 </div>
 {% endblock %}

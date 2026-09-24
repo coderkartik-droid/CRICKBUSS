@@ -1,0 +1,31 @@
+﻿/* CRICKBUSS design tokens. Kept separate so themes and component modules share one contract. */
+:root {
+  --midnight-navy: #0B1F3A;
+  --champagne: #F7E7CE;
+  --dusty-rose: #D8A7B1;
+  --pearl-white: #F8F6F0;
+  --primary: var(--midnight-navy);
+  --secondary: var(--midnight-navy);
+  --accent: var(--champagne);
+  --accent-dark: var(--champagne);
+  --danger: var(--dusty-rose);
+  --warning: var(--champagne);
+  --live-red: var(--dusty-rose);
+  --bg-main: var(--pearl-white);
+  --bg-card: var(--pearl-white);
+  --bg-subtle: color-mix(in srgb, var(--pearl-white) 88%, var(--midnight-navy));
+  --bg-dark: var(--midnight-navy);
+  --border-color: color-mix(in srgb, var(--pearl-white) 72%, var(--midnight-navy));
+  --border-light: var(--border-color);
+  --primary-border: var(--border-color);
+  --text-main: var(--midnight-navy);
+  --text-muted: color-mix(in srgb, var(--midnight-navy) 68%, var(--pearl-white));
+  --text-soft: color-mix(in srgb, var(--midnight-navy) 48%, var(--pearl-white));
+  --primary-light: color-mix(in srgb, var(--champagne) 18%, transparent);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow-sm: 0 2px 8px color-mix(in srgb, var(--midnight-navy) 10%, transparent);
+  --shadow-md: 0 14px 32px color-mix(in srgb, var(--midnight-navy) 16%, transparent);
+  --shadow-lg: 0 24px 58px color-mix(in srgb, var(--midnight-navy) 24%, transparent);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}

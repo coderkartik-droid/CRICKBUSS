@@ -229,10 +229,8 @@ try:
         content='Under clear skies after a brief rain delay.', is_featured=True, is_trending=True,
         views_count=58, likes_count=4, is_published=True)
     vcat, _ = VideoCategory.objects.get_or_create(name='T20 Highlights')
-    CricketVideo.objects.create(title='TWC 2026: Match 1 Highlights', category=vcat,
-        description='Relive Match 1 final over thriller.',
-        video_url='https://www.youtube.com/embed/dQw4w9WgXcQ', duration='08:20',
-        views_count=1203, likes_count=72, is_featured=True, is_active=True)
+    # Video seeding skipped: CricketVideo now uses a FileField (video_file).
+    # Upload videos through the Dashboard → Video Management page.
     alb, _ = PhotoAlbum.objects.get_or_create(title='TWC 2026 - Match Day', defaults={
         'category': PhotoAlbum.AlbumCategory.MATCH, 'description': 'TWC 2026 moments.',
         'is_featured': True, 'is_active': True})

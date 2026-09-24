@@ -1,0 +1,19 @@
+﻿/* Homepage and media presentation hooks. Content remains owned by the templates. */
+.hero-content { position: relative; z-index: 1; }
+.section-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.media-carousel { position: relative; width: 100%; overflow: hidden; }
+.media-carousel-track {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.625rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+}
+.media-carousel-track:active { cursor: grabbing; }
+.media-carousel-track::-webkit-scrollbar { display: none; }
+/* Desktop: 160px cards — fits ~5–6 across a typical 1200px column */
+.media-carousel-item { flex: 0 0 160px; max-width: 160px; scroll-snap-align: start; }

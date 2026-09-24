@@ -13,6 +13,7 @@ admin.site.index_title = "Cricket Database & Live Match Operations"
 
 from django.contrib.sitemaps.views import sitemap
 from apps.matches.views import HomePageView
+from apps.dashboard.views import ContactView
 from apps.matches.sitemaps import (
     StaticViewSitemap, MatchSitemap, TeamSitemap,
     PlayerSitemap, NewsSitemap, SeriesSitemap
@@ -65,7 +66,7 @@ urlpatterns = [
 
     # Static Pages (About, Contact, Privacy, Terms)
     path('about/', TemplateView.as_view(template_name='pages/about.html'), name='about'),
-    path('contact/', TemplateView.as_view(template_name='pages/contact.html'), name='contact'),
+    path('contact/', ContactView.as_view(), name='contact'),
     path('privacy-policy/', TemplateView.as_view(template_name='pages/privacy.html'), name='privacy_policy'),
     path('terms/', TemplateView.as_view(template_name='pages/terms.html'), name='terms'),
     # SEO: robots.txt and sitemap.xml

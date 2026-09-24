@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% block title %}Video Management — CRICKBUSS Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+<style>
+.video-card{border-radius:12px;overflow:hidden;border:1px solid var(--border-light,#e5e7eb);background:var(--bg-card,#fff);margin-bottom:1rem;transition:box-shadow .18s;}
+.video-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);}
+.video-card-body{padding:1rem;}
+.video-meta{font-size:.78rem;color:var(--text-muted,#6b7280);margin-bottom:.6rem;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container af-page" style="max-width:1100px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <span class="current">Video Management</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
+    <div>
+      <h1 class="af-page-title">
+        <span class="title-icon" style="background:#dc2626;"><i class="fa-solid fa-video"></i></span>
+        Video Management
+      </h1>
+      <p class="af-page-desc">Add, edit and manage cricket highlight videos.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-emerald btn-sm rounded-pill px-3" id="btnNewVideo" onclick="resetToUploadMode()">
+        <i class="fa-solid fa-plus me-1"></i>Add Video
+      </button>
+      <a href="{% url 'videos:video_list' %}" class="btn btn-ghost btn-sm rounded-pill px-3" target="_blank">
+        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Videos Page
+      </a>
+      <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-arrow-left me-1"></i>Dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ═══ LEFT: Form ═══ -->
+    <div class="col-lg-4">
+      <div class="af-card" style="position:sticky;top:80px;">
+        <div class="af-section-head">
+          <span class="af-section-icon" style="background:#dc2626;"><i class="fa-solid fa-film"></i></span>
+          <span id="videoFormTitle">{% if editing_video %}Edit Video{% else %}Add New Video{% endif %}</span>
+        </div>
+
+        <form method="post" action="{% url 'dashboard:video_management' %}"
+              enctype="multipart/form-data" class="management-form" id="videoManagementForm" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" id="videoFormAction" value="{% if editing_video %}edit{% else %}create{% endif %}">
+          <input type="hidden" name="video_id" id="videoFormId" value="{{ editing_video.id|default:'' }}">
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger rounded-3 d-flex gap-2 mb-3" role="alert">
+            <i class="fa-solid fa-circle-exclamation flex-shrink-0 mt-1"></i>
+            <div>{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
+          </div>
+          {% endif %}
+
+          <!-- Title -->
+          <div class="af-field">
+            <label class="af-label" for="{{ form.title.id_for_label }}">
+              <i class="fa-solid fa-heading me-1" style="color:#dc2626;"></i>
+              {{ form.title.label }}<span class="req">*</span>
+            </label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <div class="af-error"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.title.errors %}{{ e }}{% endfor %}</span></div>
+            {% endif %}
+          </div>
+
+          <!-- Video File upload zone -->
+          <div class="af-field">
+            <label class="af-label" for="{{ form.video_file.id_for_label }}">
+              <i class="fa-solid fa-film me-1" style="color:#dc2626;"></i>
+              {{ form.video_file.label }}<span class="req">*</span>
+            </label>
+            <div class="af-upload-zone" id="videoZone">
+              <input type="file" name="{{ form.video_file.html_name }}"
+                     id="{{ form.video_file.id_for_label }}"
+                     accept=".mp4,.webm,.mov,.avi,.mkv"
+                     onchange="previewVideo(this)">
+              <div id="videoPlaceholder">
+                <i class="fa-solid fa-cloud-arrow-up af-upload-icon"></i>
+                <div class="af-upload-label">Click or drag video here</div>
+                <div class="af-upload-hint">MP4 · WEBM · MOV · AVI · MKV</div>
+              </div>
+              <div class="af-upload-filename" id="videoFilename"></div>
+            </div>
+            {% if form.video_file.errors %}
+              <div class="af-error mt-1"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.video_file.errors %}{{ e }}{% endfor %}</span></div>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <div class="af-actions">
+            <button type="submit" class="btn btn-emerald">
+              <i class="fa-solid fa-cloud-arrow-up me-2"></i>
+              <span id="videoFormSubmitLabel">{% if editing_video %}Update Video{% else %}Upload Video{% endif %}</span>
+            </button>
+            <a href="{% url 'dashboard:video_management' %}" id="videoFormCancel"
+               class="btn btn-ghost {% if not editing_video %}d-none{% endif %}">
+              <i class="fa-solid fa-xmark me-1"></i>Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div><!-- /col-lg-4 -->
+
+    <!-- ═══ RIGHT: Videos list ═══ -->
+    <div class="col-lg-8">
+      <div class="af-table-card p-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <p class="af-table-title mb-0">
+            <i class="fa-solid fa-clapperboard me-1" style="color:#dc2626;"></i>
+            All Videos
+            <span class="badge bg-secondary rounded-pill ms-1" style="font-size:.72rem;">{{ videos.count }}</span>
+          </p>
+        </div>
+
+        {% if videos %}
+          {% for video in videos %}
+          <div class="video-card">
+            <div class="row g-0">
+              <div class="col-md-5">
+                <div style="position:relative;height:140px;overflow:hidden;background:#000;">
+                  <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}"
+                       style="width:100%;height:100%;object-fit:cover;opacity:.85;">
+                  <a href="{{ video.get_absolute_url }}" target="_blank" rel="noopener"
+                     style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                    <span style="background:rgba(220,38,38,.85);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+                      <i class="fa-solid fa-play text-white" style="font-size:.85rem;margin-left:3px;"></i>
+                    </span>
+                  </a>
+                  <span style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,.75);color:#fff;font-size:.7rem;padding:1px 6px;border-radius:4px;font-family:monospace;">
+                    {{ video.duration }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-7">
+                <div class="video-card-body">
+                  <div class="fw-bold mb-1" style="font-size:.92rem;word-break:break-word;">{{ video.title }}</div>
+                  <div class="video-meta">
+                    <span class="badge bg-light text-dark border me-1" style="font-size:.7rem;">{{ video.category.name }}</span>
+                    <i class="fa-regular fa-clock me-1"></i>{{ video.created_at|date:"M d, Y H:i" }}
+                  </div>
+                  <div class="d-flex gap-2 flex-wrap mt-2">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary rounded-pill"
+                            style="font-size:.78rem;padding:.25rem .7rem;"
+                            onclick="editVideo('{{ video.id }}','{{ video.title|escapejs }}')">
+                      <i class="fa-solid fa-pen me-1"></i>Edit
+                    </button>
+                    <form method="post" action="{% url 'dashboard:video_management' %}"
+                          onsubmit="return confirm('Delete this video permanently?');" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="video_id" value="{{ video.id }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"
+                              style="font-size:.78rem;padding:.25rem .7rem;">
+                        <i class="fa-solid fa-trash me-1"></i>Delete
+                      </button>
+                    </form>
+                    <a href="{{ video.get_absolute_url }}" target="_blank" rel="noopener"
+                       class="btn btn-sm btn-outline-secondary rounded-pill"
+                       style="font-size:.78rem;padding:.25rem .7rem;">
+                      <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="af-empty">
+          <div class="af-empty-icon"><i class="fa-solid fa-video"></i></div>
+          <h5>No videos added yet</h5>
+          <p>Use the form to add your first video.</p>
+          <button type="button" class="btn btn-emerald btn-sm mt-2 rounded-pill px-4" onclick="resetToUploadMode()">
+            <i class="fa-solid fa-plus me-2"></i>Add First Video
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div><!-- /col-lg-8 -->
+
+  </div><!-- /row -->
+</div>
+
+{% block extra_js %}
+<script>
+function previewVideo(input) {
+  const fname = document.getElementById('videoFilename');
+  const ph    = document.getElementById('videoPlaceholder');
+  if (input.files && input.files[0]) {
+    fname.textContent   = input.files[0].name;
+    fname.style.display = 'block';
+    ph.style.display    = 'none';
+  }
+}
+
+function resetToUploadMode() {
+  document.getElementById('videoFormAction').value            = 'create';
+  document.getElementById('videoFormId').value                = '';
+  document.getElementById('videoFormTitle').textContent       = 'Add New Video';
+  document.getElementById('videoFormSubmitLabel').textContent = 'Upload Video';
+  document.getElementById('videoFormCancel').classList.add('d-none');
+
+  const form = document.getElementById('videoManagementForm');
+  form.querySelector('[name="title"]').value = '';
+  form.querySelector('input[type=file]').value = '';
+
+  document.getElementById('videoFilename').style.display  = 'none';
+  document.getElementById('videoPlaceholder').style.display = '';
+
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function editVideo(id, title) {
+  document.getElementById('videoFormAction').value            = 'edit';
+  document.getElementById('videoFormId').value                = id;
+  document.getElementById('videoFormTitle').textContent       = 'Edit Video';
+  document.getElementById('videoFormSubmitLabel').textContent = 'Update Video';
+  document.getElementById('videoFormCancel').classList.remove('d-none');
+
+  const form = document.getElementById('videoManagementForm');
+  form.querySelector('[name="title"]').value = title;
+  /* Clear file input — user only needs to re-upload if changing the file */
+  form.querySelector('input[type=file]').value = '';
+  document.getElementById('videoFilename').style.display  = 'none';
+  document.getElementById('videoPlaceholder').style.display = '';
+
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+(function () {
+  const z = document.getElementById('videoZone');
+  if (!z) return;
+  z.addEventListener('dragover',  e => { e.preventDefault(); z.classList.add('drag-over'); });
+  z.addEventListener('dragleave', ()  => z.classList.remove('drag-over'));
+  z.addEventListener('drop',      e => {
+    e.preventDefault(); z.classList.remove('drag-over');
+    const fi = z.querySelector('input[type=file]');
+    if (fi && e.dataTransfer.files.length) { fi.files = e.dataTransfer.files; previewVideo(fi); }
+  });
+})();
+</script>
+{% endblock %}
+{% endblock %}

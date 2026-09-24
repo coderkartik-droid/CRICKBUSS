@@ -103,7 +103,10 @@ class TeamViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PlayerViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Player.objects.filter(is_active=True).select_related('primary_team').prefetch_related('batting_stats', 'bowling_stats')
+    queryset = Player.objects.filter(
+        is_active=True,
+        registration_status=Player.RegistrationStatus.APPROVED,
+    ).select_related('primary_team').prefetch_related('batting_stats', 'bowling_stats')
     serializer_class = PlayerSerializer
     lookup_field = 'slug'
 

@@ -1,0 +1,383 @@
+/* ============================================================
+   CRICKBUSS — Admin Forms Design System
+   Consistent across all dashboard & admin form templates.
+   Does NOT override public-facing styles.
+   ============================================================ */
+
+/* ── Page shell ────────────────────────────────────────────── */
+.af-page { padding: 2rem 0 3rem; }
+
+/* ── Breadcrumb ─────────────────────────────────────────────── */
+.af-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 1.5rem;
+}
+.af-breadcrumb a { color: var(--text-muted, #6b7280); text-decoration: none; }
+.af-breadcrumb a:hover { color: var(--primary, #0f766e); }
+.af-breadcrumb .sep { opacity: .5; }
+.af-breadcrumb .current { color: var(--text-main, #111); }
+
+/* ── Page header ────────────────────────────────────────────── */
+.af-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+.af-page-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-main, #111);
+  margin: 0 0 .25rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.af-page-title .title-icon {
+  width: 38px; height: 38px;
+  border-radius: .6rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: #fff; flex-shrink: 0;
+  background: var(--primary, #0f766e);
+}
+.af-page-desc { font-size: .86rem; color: var(--text-muted, #6b7280); margin: 0; }
+
+/* ── Form card ──────────────────────────────────────────────── */
+.af-card {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: 16px;
+  padding: 2rem 2rem 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,.04);
+}
+@media (max-width: 576px) {
+  .af-card { padding: 1.25rem 1rem; }
+}
+
+/* ── Section heading inside card ───────────────────────────── */
+.af-section-head {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text-main, #111);
+  margin-bottom: 1.25rem;
+  padding-bottom: .85rem;
+  border-bottom: 1.5px solid var(--border-light, #e5e7eb);
+}
+.af-section-icon {
+  width: 32px; height: 32px;
+  border-radius: .5rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; color: #fff; flex-shrink: 0;
+}
+
+/* ── Label ──────────────────────────────────────────────────── */
+.af-label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--text-main, #374151);
+  margin-bottom: .4rem;
+  letter-spacing: .01em;
+}
+.af-label .req { color: #ef4444; margin-left: .15rem; }
+.af-label .opt {
+  color: var(--text-muted, #9ca3af);
+  font-weight: 400; font-size: .73rem; margin-left: .2rem;
+}
+
+/* ── Input / Select uniform sizing ─────────────────────────── */
+.af-input,
+.af-select {
+  display: block;
+  width: 100%;
+  height: 42px;
+  padding: .5rem .85rem;
+  font-size: .875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-main, #111);
+  background: var(--bg-card, #fff);
+  border: 1.5px solid var(--border-light, #d1d5db);
+  border-radius: 10px;
+  transition: border-color .18s, box-shadow .18s;
+  appearance: none;
+}
+.af-select { cursor: pointer; }
+.af-textarea {
+  display: block;
+  width: 100%;
+  padding: .6rem .85rem;
+  font-size: .875rem;
+  line-height: 1.6;
+  color: var(--text-main, #111);
+  background: var(--bg-card, #fff);
+  border: 1.5px solid var(--border-light, #d1d5db);
+  border-radius: 10px;
+  transition: border-color .18s, box-shadow .18s;
+  resize: vertical;
+  min-height: 90px;
+}
+.af-input:focus, .af-select:focus, .af-textarea:focus {
+  outline: none;
+  border-color: var(--primary, #0f766e);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
+}
+.af-input.is-invalid, .af-select.is-invalid, .af-textarea.is-invalid {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, .12);
+}
+
+/* Ensure Django-rendered inputs inside .af-field get the same style */
+.af-field .form-control,
+.af-field .form-select,
+.af-field select,
+.af-field textarea {
+  height: auto;
+  min-height: 42px;
+  border-radius: 10px;
+  border-width: 1.5px;
+  font-size: .875rem;
+  transition: border-color .18s, box-shadow .18s;
+}
+.af-field .form-control:focus,
+.af-field .form-select:focus,
+.af-field select:focus {
+  border-color: var(--primary, #0f766e) !important;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, .12) !important;
+}
+.af-field .form-control.is-invalid,
+.af-field .form-select.is-invalid {
+  border-color: #f87171 !important;
+}
+
+/* ── Field wrapper ──────────────────────────────────────────── */
+.af-field { margin-bottom: 1.1rem; }
+.af-field:last-child { margin-bottom: 0; }
+.af-hint { font-size: .74rem; color: var(--text-muted, #6b7280); margin-top: .3rem; }
+.af-error {
+  font-size: .76rem;
+  color: #dc2626;
+  margin-top: .3rem;
+  display: flex;
+  align-items: flex-start;
+  gap: .25rem;
+}
+.af-error i { margin-top: .1rem; flex-shrink: 0; }
+
+/* ── Two-column grid ─────────────────────────────────────────── */
+.af-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.25rem;
+}
+.af-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem 1.25rem;
+}
+.af-col-span-2 { grid-column: span 2; }
+.af-col-span-3 { grid-column: span 3; }
+@media (max-width: 768px) {
+  .af-grid-2, .af-grid-3 { grid-template-columns: 1fr; }
+  .af-col-span-2, .af-col-span-3 { grid-column: span 1; }
+}
+
+/* ── File upload zone ────────────────────────────────────────── */
+.af-upload-zone {
+  border: 2px dashed var(--border-light, #d1d5db);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  position: relative;
+  background: var(--bg-card, #fff);
+}
+.af-upload-zone:hover,
+.af-upload-zone.drag-over {
+  border-color: var(--primary, #0f766e);
+  background: rgba(15, 118, 110, .04);
+}
+.af-upload-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.af-upload-icon {
+  font-size: 2rem;
+  margin-bottom: .5rem;
+  opacity: .55;
+  color: var(--primary, #0f766e);
+}
+.af-upload-label { font-size: .85rem; font-weight: 600; margin-bottom: .2rem; }
+.af-upload-hint { font-size: .74rem; color: var(--text-muted, #6b7280); }
+.af-upload-filename {
+  display: none;
+  margin-top: .6rem;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--primary, #0f766e);
+  word-break: break-all;
+}
+.af-img-preview {
+  display: none;
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary, #0f766e);
+  margin: 0 auto .6rem;
+}
+.af-video-preview {
+  display: none;
+  width: 100%;
+  max-height: 180px;
+  border-radius: 10px;
+  background: #000;
+  margin-bottom: .6rem;
+}
+
+/* ── Action bar (Save / Cancel) ─────────────────────────────── */
+.af-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .75rem;
+  padding-top: 1.25rem;
+  border-top: 1.5px solid var(--border-light, #e5e7eb);
+  margin-top: 1.5rem;
+}
+.af-actions .btn {
+  min-width: 130px;
+  height: 42px;
+  font-weight: 600;
+  border-radius: 10px;
+  font-size: .88rem;
+}
+.af-actions .spacer { flex: 1; }
+@media (max-width: 576px) {
+  .af-actions { flex-direction: column; }
+  .af-actions .btn { width: 100%; min-width: 0; }
+}
+
+/* ── Admin table ─────────────────────────────────────────────── */
+.af-table-card {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.04);
+}
+.af-table-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1.5px solid var(--border-light, #e5e7eb);
+}
+.af-table-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text-main, #111);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.af-table table { margin: 0; }
+.af-table thead th {
+  background: var(--bg-subtle, #f9fafb);
+  font-size: .73rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted, #6b7280);
+  padding: .7rem 1rem;
+  border-bottom: 1.5px solid var(--border-light, #e5e7eb);
+  white-space: nowrap;
+}
+.af-table tbody tr {
+  transition: background .15s;
+  border-bottom: 1px solid var(--border-light, #e5e7eb);
+}
+.af-table tbody tr:last-child { border-bottom: none; }
+.af-table tbody tr:hover { background: var(--bg-subtle, #f9fafb); }
+.af-table tbody td { padding: .75rem 1rem; font-size: .88rem; vertical-align: middle; }
+
+/* ── Status badges ───────────────────────────────────────────── */
+.af-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .25rem .75rem;
+  border-radius: 2rem;
+  font-size: .73rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.af-badge-pending  { background:#fef9c3; color:#92400e; border:1px solid #fcd34d; }
+.af-badge-approved, .af-badge-active   { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+.af-badge-rejected, .af-badge-inactive { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+.af-badge-info     { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+.af-badge-warning  { background:#fef9c3; color:#92400e; border:1px solid #fcd34d; }
+
+/* ── Table search bar ────────────────────────────────────────── */
+.af-search-box {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--bg-subtle, #f9fafb);
+  border: 1.5px solid var(--border-light, #d1d5db);
+  border-radius: 10px;
+  padding: .35rem .75rem;
+  min-width: 220px;
+}
+.af-search-box i { color: var(--text-muted, #6b7280); font-size: .85rem; }
+.af-search-box input {
+  border: none; background: transparent; outline: none;
+  font-size: .85rem; color: var(--text-main, #111); width: 100%;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.af-empty {
+  padding: 3.5rem 1rem;
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+}
+.af-empty-icon {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+  opacity: .4;
+}
+.af-empty h5 { font-size: 1rem; font-weight: 700; color: var(--text-main, #111); margin-bottom: .35rem; }
+.af-empty p  { font-size: .84rem; margin: 0; }
+
+/* ── Success card ────────────────────────────────────────────── */
+.af-success-card {
+  background: var(--bg-card, #fff);
+  border: 1.5px solid #86efac;
+  border-radius: 18px;
+  padding: 3rem 2rem;
+  text-align: center;
+  max-width: 520px;
+  margin: 2rem auto;
+  box-shadow: 0 4px 24px rgba(16,185,129,.1);
+}
+.af-success-icon {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 1.25rem;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg,#10b981,#059669);
+  font-size: 2rem; color: #fff;
+}

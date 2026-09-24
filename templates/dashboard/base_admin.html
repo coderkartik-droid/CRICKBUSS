@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{# ============================================================
+   CRICKBUSS Admin Shell — fixed left sidebar + main content
+   All admin templates that need the sidebar should extend this.
+   Public templates stay on base.html.
+   ============================================================ #}
+
+{% block content %}
+<div class="adm-shell">
+
+  <!-- ═══ LEFT SIDEBAR ═══ -->
+  <aside class="adm-sidebar" id="admSidebar">
+
+    <!-- Sidebar header -->
+    <div class="adm-sidebar-brand">
+      <span class="adm-brand-icon"><i class="fa-solid fa-baseball-bat-ball"></i></span>
+      <span class="adm-brand-text">CRICK<span>BUSS</span></span>
+      <button class="adm-sidebar-close d-lg-none" id="sidebarCloseBtn" aria-label="Close sidebar">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Nav -->
+    <nav class="adm-nav">
+
+      <div class="adm-nav-label">Main</div>
+
+      <a href="{% url 'dashboard:admin_dashboard' %}"
+         class="adm-nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+        <span class="adm-nav-text">Dashboard</span>
+      </a>
+
+      <a href="{% url 'dashboard:player_requests' %}"
+         class="adm-nav-link {% if 'player_request' in request.resolver_match.url_name %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-user-clock"></i></span>
+        <span class="adm-nav-text">Player Requests</span>
+        {% if pending_requests_count and pending_requests_count > 0 %}
+          <span class="adm-nav-badge">{{ pending_requests_count }}</span>
+        {% endif %}
+      </a>
+
+      <div class="adm-nav-label mt-2">Cricket</div>
+
+      <a href="{% url 'dashboard:local_management' entity='match' %}"
+         class="adm-nav-link {% if entity == 'match' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-baseball-bat-ball"></i></span>
+        <span class="adm-nav-text">Matches</span>
+      </a>
+
+      <a href="{% url 'dashboard:local_management' entity='tournament' %}"
+         class="adm-nav-link {% if entity == 'tournament' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-trophy"></i></span>
+        <span class="adm-nav-text">Tournaments</span>
+      </a>
+
+      <a href="{% url 'dashboard:local_management' entity='team' %}"
+         class="adm-nav-link {% if entity == 'team' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-shield-halved"></i></span>
+        <span class="adm-nav-text">Teams</span>
+      </a>
+
+      <a href="{% url 'dashboard:local_management' entity='player' %}"
+         class="adm-nav-link {% if entity == 'player' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-user"></i></span>
+        <span class="adm-nav-text">Players</span>
+      </a>
+
+      <a href="{% url 'dashboard:local_management' entity='ground' %}"
+         class="adm-nav-link {% if entity == 'ground' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-location-dot"></i></span>
+        <span class="adm-nav-text">Grounds</span>
+      </a>
+
+      <div class="adm-nav-label mt-2">Media</div>
+
+      <a href="{% url 'dashboard:news_management' %}"
+         class="adm-nav-link {% if request.resolver_match.url_name == 'news_management' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-newspaper"></i></span>
+        <span class="adm-nav-text">News</span>
+      </a>
+
+      <a href="{% url 'dashboard:photo_management' %}"
+         class="adm-nav-link {% if request.resolver_match.url_name == 'photo_management' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-camera"></i></span>
+        <span class="adm-nav-text">Photos</span>
+      </a>
+
+      <a href="{% url 'dashboard:video_management' %}"
+         class="adm-nav-link {% if request.resolver_match.url_name == 'video_management' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-video"></i></span>
+        <span class="adm-nav-text">Videos</span>
+      </a>
+
+      <a href="{% url 'dashboard:messages_list' %}"
+         class="adm-nav-link {% if 'message' in request.resolver_match.url_name %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-envelope"></i></span>
+        <span class="adm-nav-text">Messages</span>
+        {% if unread_messages_count and unread_messages_count > 0 %}
+          <span class="adm-nav-badge">{{ unread_messages_count }}</span>
+        {% endif %}
+      </a>
+
+      <div class="adm-nav-label mt-2">System</div>
+
+      <a href="{% url 'dashboard:managed_users' %}"
+         class="adm-nav-link {% if request.resolver_match.url_name == 'managed_users' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-user-shield"></i></span>
+        <span class="adm-nav-text">Users</span>
+      </a>
+
+      <a href="{% url 'dashboard:website_settings' %}"
+         class="adm-nav-link {% if request.resolver_match.url_name == 'website_settings' %}active{% endif %}">
+        <span class="adm-nav-icon"><i class="fa-solid fa-gear"></i></span>
+        <span class="adm-nav-text">Settings</span>
+      </a>
+
+      {% if request.user.is_superuser %}
+      <a href="/admin/" target="_blank" rel="noopener" class="adm-nav-link">
+        <span class="adm-nav-icon"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+        <span class="adm-nav-text">Django Admin</span>
+      </a>
+      {% endif %}
+
+    </nav>
+
+    <!-- Sidebar footer: user info -->
+    <div class="adm-sidebar-footer">
+      <img src="{{ request.user.get_avatar_url }}" alt="Avatar"
+           class="adm-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=0f766e&color=fff'">
+      <div class="adm-user-info">
+        <div class="adm-user-name">{{ request.user.get_short_name|default:request.user.username }}</div>
+        <div class="adm-user-role">{{ request.user.get_role_display|default:"Admin" }}</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay (mobile) -->
+  <div class="adm-overlay d-lg-none" id="admOverlay"></div>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <div class="adm-main" id="admMain">
+
+    <!-- Top bar (mobile hamburger + page title) -->
+    <div class="adm-topbar d-lg-none">
+      <button class="adm-hamburger" id="sidebarOpenBtn" aria-label="Open sidebar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <span class="adm-topbar-title">{% block admin_page_title %}Admin{% endblock %}</span>
+      <a href="{% url 'home' %}" class="adm-topbar-home" title="Back to website">
+        <i class="fa-solid fa-globe"></i>
+      </a>
+    </div>
+
+    <!-- Actual page content -->
+    <div class="adm-content">
+      {% block admin_content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ TOAST CONTAINER ═══ -->
+<div id="admToastStack" class="adm-toast-stack" aria-live="polite"></div>
+
+<!-- ═══ CONFIRM DIALOG ═══ -->
+<div class="adm-confirm-overlay" id="admConfirmOverlay" hidden>
+  <div class="adm-confirm-box" role="dialog" aria-modal="true">
+    <div class="adm-confirm-icon" id="admConfirmIcon">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    <h5 class="adm-confirm-title" id="admConfirmTitle">Are you sure?</h5>
+    <p class="adm-confirm-body" id="admConfirmBody">This action cannot be undone.</p>
+    <div class="adm-confirm-actions">
+      <button type="button" class="adm-confirm-cancel" id="admConfirmCancel">Cancel</button>
+      <button type="button" class="adm-confirm-ok" id="admConfirmOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+{% block admin_js %}{% endblock %}
+{% endblock %}

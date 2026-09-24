@@ -83,6 +83,12 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'players:player_register' %}">
+            <i class="fa-solid fa-user-plus nav-item-icon" aria-hidden="true"></i>
+            <span>Register Player</span>
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'rankings:rankings_list' %}">
             <i class="fa-solid fa-ranking-star nav-item-icon" aria-hidden="true"></i>
             <span>Local Rankings</span>
@@ -94,16 +100,17 @@
             <span>News</span>
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'videos:video_list' %}">
-            <i class="fa-solid fa-play nav-item-icon" aria-hidden="true"></i>
-            <span>Videos</span>
-          </a>
-        </li>
+
         <li class="nav-item">
           <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'photos:album_list' %}">
             <i class="fa-solid fa-camera nav-item-icon" aria-hidden="true"></i>
             <span>Photos</span>
+          </a>
+        </li>
+        <li class="nav-item d-lg-none">
+          <a class="nav-link nav-link-custom d-flex align-items-center gap-2" href="{% url 'videos:video_list' %}">
+            <i class="fa-solid fa-video nav-item-icon" aria-hidden="true"></i>
+            <span>Videos</span>
           </a>
         </li>
       </ul>
@@ -157,13 +164,16 @@
               {% if user.is_superuser or user.role == 'admin' %}
                 <li><a class="dropdown-item" href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-2" style="color: var(--primary);"></i> Admin Dashboard</a></li>
                 <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'dashboard:player_requests' %}"><i class="fa-solid fa-user-clock me-2" style="color: var(--primary);"></i> Player Requests</a></li>
                 <li><a class="dropdown-item" href="{% url 'dashboard:news_management' %}"><i class="fa-solid fa-newspaper me-2" style="color: var(--secondary);"></i> Manage News</a></li>
                 <li><a class="dropdown-item" href="{% url 'dashboard:photo_management' %}"><i class="fa-solid fa-camera me-2" style="color: var(--accent);"></i> Manage Photos</a></li>
+                <li><a class="dropdown-item" href="{% url 'dashboard:video_management' %}"><i class="fa-solid fa-video me-2" style="color: var(--primary);"></i> Manage Videos</a></li>
               {% elif user.role == 'scorer' %}
                 <li><a class="dropdown-item" href="{% url 'dashboard:scorer' %}"><i class="fa-solid fa-tower-broadcast me-2" style="color: var(--danger);"></i> Scorer Panel</a></li>
               {% endif %}
+              <li><a class="dropdown-item" href="{% url 'dashboard:home' %}"><i class="fa-solid fa-gauge me-2" style="color: var(--primary);"></i> Dashboard</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fa-solid fa-user-gear me-2" style="color: var(--secondary);"></i> Profile</a></li>
               <li><a class="dropdown-item" href="{% url 'dashboard:saved_items' %}"><i class="fa-solid fa-bookmark me-2" style="color: var(--accent);"></i> Saved Watchlist</a></li>
-              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fa-solid fa-user-gear me-2" style="color: var(--secondary);"></i> Account Profile</a></li>
               <li><a class="dropdown-item" href="{% url 'dashboard:notifications' %}"><i class="fa-solid fa-bell me-2" style="color: var(--text-muted);"></i> Notifications</a></li>
               {% if user.is_superuser %}
                 <li><hr class="dropdown-divider"></li>

@@ -1,0 +1,16 @@
+﻿/* Responsive-only layout adjustments. Breakpoint values intentionally match the pre-refactor stylesheet. */
+@media (max-width: 991.98px) {
+  .navbar-custom .navbar-nav { flex-wrap: wrap; }
+  .navbar-custom .form-control { width: min(100%, 340px); }
+  .section-title { flex-wrap: wrap; }
+  .btn-toolbar, .action-buttons { flex-wrap: wrap; }
+}
+@media (max-width: 767.98px) {
+  .form-actions { flex-direction: column; }
+  .form-actions .btn { width: 100%; }
+  .media-carousel-item { flex-basis: 148px; max-width: 148px; }
+}
+@media (max-width: 575.98px) {
+  .media-carousel-item { flex-basis: 136px; max-width: 136px; }
+  .section-title { align-items: flex-start; }
+}

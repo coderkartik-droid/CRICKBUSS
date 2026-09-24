@@ -79,6 +79,8 @@ class LoginView(View):
             user_agent=request.META.get('HTTP_USER_AGENT', '')[:512],
         )
         messages.success(request, f'Welcome back, {user.get_short_name()}!')
+        if user.role == CustomUser.Role.SCORER:
+            return redirect('dashboard:scorer')
         return redirect(request.POST.get('next') or request.GET.get('next') or dashboard_for(user))
 
 

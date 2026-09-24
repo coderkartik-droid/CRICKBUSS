@@ -1,0 +1,5 @@
+﻿/* Tables are self-contained scroll regions so Bootstrap tables never widen the page. */
+.table-responsive { overflow: auto; -webkit-overflow-scrolling: touch; }
+.table-responsive .table, .table-responsive .sports-table { max-width: none; }
+.table { margin: 0; vertical-align: middle; }
+.sports-table { width: 100%; border-collapse: collapse; }

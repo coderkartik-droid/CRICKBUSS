@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% block title %}Register Player — CRICKBUSS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+<style>
+/* ── Hero ── */
+.reg-hero{background:linear-gradient(135deg,var(--primary,#0f766e) 0%,var(--secondary,#0f766e) 100%);padding:3rem 0 5.5rem;clip-path:ellipse(120% 100% at 50% 0%);margin-bottom:-3rem;}
+.reg-hero h1{color:#fff;font-size:clamp(1.6rem,4vw,2.2rem);}
+.reg-hero p{color:rgba(255,255,255,.85);}
+.reg-hero-icon{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.2);display:inline-flex;align-items:center;justify-content:center;margin-bottom:.75rem;}
+
+/* ── Section cards use af-card ── */
+.sec-head{display:flex;align-items:center;gap:.6rem;font-size:.95rem;font-weight:700;margin-bottom:1.25rem;padding-bottom:.85rem;border-bottom:1.5px solid var(--border-light,#e5e7eb);}
+.sec-icon{width:32px;height:32px;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;flex-shrink:0;}
+
+/* ── Photo zone ── */
+.photo-zone{border:2px dashed var(--border-light,#d1d5db);border-radius:.75rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;}
+.photo-zone:hover,.photo-zone.ov{border-color:var(--primary,#0f766e);background:rgba(15,118,110,.04);}
+.photo-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+#photoPreview{width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid var(--primary,#0f766e);display:none;margin:0 auto .6rem;}
+
+/* ── Team search ── */
+#teamSearch{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.415zm-5.242 1.15a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:.75rem 50%;padding-left:2.25rem!important;}
+
+/* ── Submit bar ── */
+.submit-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:1.25rem 1.75rem;background:var(--bg-card,#fff);border:1px solid var(--border-light,#e5e7eb);border-radius:1rem;margin-top:.5rem;}
+
+/* ── Info sidebar ── */
+.info-card{background:var(--bg-card,#fff);border:1px solid var(--border-light,#e5e7eb);border-radius:1rem;padding:1.25rem;margin-bottom:1rem;}
+.info-card h6{font-size:.85rem;font-weight:700;margin-bottom:.85rem;}
+.step-row{display:flex;gap:.65rem;margin-bottom:.8rem;}
+.step-row:last-child{margin-bottom:0;}
+.step-dot{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;background:var(--primary,#0f766e);}
+.step-title{font-size:.82rem;font-weight:600;}
+.step-desc{font-size:.76rem;color:var(--text-muted,#6b7280);}
+.g-item{font-size:.79rem;color:var(--text-muted,#6b7280);display:flex;gap:.4rem;margin-bottom:.45rem;}
+.g-item:last-child{margin-bottom:0;}
+
+/* ── Field helpers ── */
+.fl{font-size:.82rem;font-weight:700;margin-bottom:.35rem;display:flex;align-items:center;gap:.3rem;color:var(--text-main,#111);}
+.fl .req{color:#ef4444;}
+.fl .opt{color:var(--text-muted,#9ca3af);font-weight:400;font-size:.74rem;}
+.fhint{font-size:.75rem;color:var(--text-muted,#6b7280);margin-top:.3rem;}
+.ferr{font-size:.78rem;color:#dc2626;margin-top:.28rem;display:flex;align-items:flex-start;gap:.25rem;}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="reg-hero">
+  <div class="container text-center px-4">
+    <div class="reg-hero-icon"><i class="fa-solid fa-user-plus fs-4 text-white"></i></div>
+    <h1 class="fw-bold mb-2">Register a Cricket Player</h1>
+    <p class="mb-0">Fill in the details below — every submission is reviewed by admin before going live.</p>
+  </div>
+</div>
+
+<div class="container pb-5" style="max-width:1100px;">
+
+{% if success %}
+<!-- ── Success ── -->
+<div class="af-success-card shadow-sm">
+  <div class="af-success-icon"><i class="fa-solid fa-check"></i></div>
+  <h3 class="fw-bold mb-2">Registration Submitted!</h3>
+  <p class="text-muted mb-4">
+    Your registration request has been submitted successfully and is awaiting admin approval.
+    The player will appear on the website once approved.
+  </p>
+  <div class="d-flex gap-3 justify-content-center flex-wrap">
+    <a href="{% url 'players:player_register' %}" class="btn btn-emerald px-4 fw-semibold rounded-pill">
+      <i class="fa-solid fa-user-plus me-2"></i>Register Another
+    </a>
+    <a href="{% url 'players:player_list' %}" class="btn btn-outline-secondary px-4 rounded-pill">
+      <i class="fa-solid fa-users me-2"></i>Browse Players
+    </a>
+  </div>
+</div>
+
+{% else %}
+<div class="row g-4 pt-2">
+
+  <!-- ── Main form ── -->
+  <div class="col-lg-8">
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger rounded-3 d-flex gap-2 mb-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation mt-1 flex-shrink-0"></i>
+      <div>{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate id="regForm">
+      {% csrf_token %}
+
+      <!-- Section A: Personal -->
+      <div class="af-card">
+        <div class="sec-head">
+          <span class="sec-icon" style="background:var(--primary,#0f766e);"><i class="fa-solid fa-id-card"></i></span>
+          Personal Details
+        </div>
+
+        <div class="mb-3">
+          <label class="fl" for="{{ form.full_name.id_for_label }}">
+            <i class="fa-solid fa-user" style="color:var(--primary);"></i> Full Name <span class="req">*</span>
+          </label>
+          {{ form.full_name }}
+          {% if form.full_name.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.full_name.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="fl" for="{{ form.mobile_number.id_for_label }}">
+              <i class="fa-solid fa-mobile-screen" style="color:var(--primary);"></i> Mobile <span class="req">*</span>
+            </label>
+            {{ form.mobile_number }}
+            {% if form.mobile_number.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.mobile_number.errors %}{{ e }}{% endfor %}</span></div>
+            {% else %}<div class="fhint">Include country code, e.g. +91 98765 43210</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="fl" for="{{ form.email_address.id_for_label }}">
+              <i class="fa-solid fa-envelope" style="color:var(--primary);"></i> Email <span class="opt">(optional)</span>
+            </label>
+            {{ form.email_address }}
+            {% if form.email_address.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.email_address.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="fl" for="{{ form.date_of_birth.id_for_label }}">
+              <i class="fa-solid fa-cake-candles" style="color:var(--primary);"></i> Date of Birth <span class="opt">(optional)</span>
+            </label>
+            {{ form.date_of_birth }}
+            {% if form.date_of_birth.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.date_of_birth.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="fl" for="{{ form.jersey_number.id_for_label }}">
+              <i class="fa-solid fa-shirt" style="color:var(--primary);"></i> Jersey Number <span class="opt">(optional)</span>
+            </label>
+            {{ form.jersey_number }}
+            {% if form.jersey_number.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.jersey_number.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+          </div>
+        </div>
+
+        <div class="mb-0">
+          <label class="fl" for="{{ form.full_address.id_for_label }}">
+            <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Address <span class="opt">(optional)</span>
+          </label>
+          {{ form.full_address }}
+          {% if form.full_address.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.full_address.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Section B: Player Details -->
+      <div class="af-card">
+        <div class="sec-head">
+          <span class="sec-icon" style="background:#7c3aed;"><i class="fa-solid fa-baseball-bat-ball"></i></span>
+          Player Details
+        </div>
+
+        <!-- Photo -->
+        <div class="mb-3">
+          <label class="fl"><i class="fa-solid fa-camera" style="color:#7c3aed;"></i> Player Photo <span class="opt">(optional)</span></label>
+          <div class="photo-zone" id="photoZone">
+            <input type="file" name="{{ form.photo.html_name }}" id="{{ form.photo.id_for_label }}" accept="image/*" onchange="previewPhoto(this)">
+            <img src="" alt="Preview" id="photoPreview">
+            <div id="photoPlaceholder">
+              <i class="fa-solid fa-cloud-arrow-up fs-3 mb-2" style="color:#7c3aed;opacity:.6;"></i>
+              <div class="fw-semibold small">Click or drag a photo here</div>
+              <div class="text-muted" style="font-size:.74rem;">PNG · JPG · WEBP · max 5 MB</div>
+            </div>
+          </div>
+          {% if form.photo.errors %}<div class="ferr mt-1"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.photo.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+        </div>
+
+        <!-- Country -->
+        <div class="mb-3">
+          <label class="fl" for="{{ form.country.id_for_label }}">
+            <i class="fa-solid fa-flag" style="color:#7c3aed;"></i> Country <span class="req">*</span>
+          </label>
+          {{ form.country }}
+          {% if form.country.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.country.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="fl" for="{{ form.playing_role.id_for_label }}">
+              <i class="fa-solid fa-person-running" style="color:#7c3aed;"></i> Playing Role <span class="req">*</span>
+            </label>
+            {{ form.playing_role }}
+            {% if form.playing_role.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.playing_role.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="fl" for="{{ form.batting_style.id_for_label }}">
+              <i class="fa-solid fa-hand-back-fist" style="color:#7c3aed;"></i> Batting Style <span class="req">*</span>
+            </label>
+            {{ form.batting_style }}
+            {% if form.batting_style.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.batting_style.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="fl" for="{{ form.bowling_style.id_for_label }}">
+            <i class="fa-solid fa-circle-dot" style="color:#7c3aed;"></i> Bowling Style <span class="opt">(optional)</span>
+          </label>
+          {{ form.bowling_style }}
+          {% if form.bowling_style.errors %}<div class="ferr"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.bowling_style.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+        </div>
+
+        <!-- Team -->
+        <div class="mb-0">
+          <label class="fl" for="id_team_select">
+            <i class="fa-solid fa-shield-halved" style="color:#7c3aed;"></i> Team <span class="opt">(optional)</span>
+          </label>
+          {% if has_teams %}
+            <input type="text" id="teamSearch" class="form-control mb-2" placeholder="Search teams…" autocomplete="off">
+            {{ form.team }}
+            <div class="fhint"><i class="fa-solid fa-circle-info me-1"></i>Leave blank if not applicable.</div>
+          {% else %}
+            <div class="text-muted small"><i class="fa-solid fa-circle-info me-1"></i>No teams registered yet — you can still submit.</div>
+            <div style="display:none;">{{ form.team }}</div>
+          {% endif %}
+          {% if form.team.errors %}<div class="ferr mt-1"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.team.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Section C: Bio -->
+      <div class="af-card">
+        <div class="sec-head">
+          <span class="sec-icon" style="background:#d97706;"><i class="fa-solid fa-clipboard-list"></i></span>
+          Short Bio <span class="text-muted fw-normal ms-1" style="font-size:.82rem;">(optional)</span>
+        </div>
+        {{ form.short_bio }}
+        {% if form.short_bio.errors %}<div class="ferr mt-1"><i class="fa-solid fa-circle-exclamation"></i><span>{% for e in form.short_bio.errors %}{{ e }}{% endfor %}</span></div>{% endif %}
+        <div class="fhint mt-1">A short paragraph about the player's background and career.</div>
+      </div>
+
+      <!-- Submit bar -->
+      <div class="submit-bar shadow-sm">
+        <div class="d-flex align-items-center gap-2 text-muted small">
+          <i class="fa-solid fa-shield-halved" style="color:var(--primary);font-size:1.1rem;"></i>
+          <span><strong class="text-body">Your submission is private.</strong> It appears publicly only after admin approval.</span>
+        </div>
+        <button type="submit" class="btn btn-emerald px-5 py-2 fw-semibold rounded-pill" id="submitBtn">
+          <i class="fa-solid fa-paper-plane me-2"></i>Submit Registration
+        </button>
+      </div>
+    </form>
+  </div><!-- /col-lg-8 -->
+
+  <!-- ── Sidebar ── -->
+  <div class="col-lg-4">
+    <div class="info-card">
+      <h6><i class="fa-solid fa-circle-info me-2" style="color:var(--primary);"></i>How It Works</h6>
+      <div class="step-row"><span class="step-dot">1</span><div><div class="step-title">Fill the form</div><div class="step-desc">Provide the player's details.</div></div></div>
+      <div class="step-row"><span class="step-dot">2</span><div><div class="step-title">Admin review</div><div class="step-desc">Our team checks for accuracy.</div></div></div>
+      <div class="step-row"><span class="step-dot">3</span><div><div class="step-title">Goes live</div><div class="step-desc">Approved players appear across the site.</div></div></div>
+    </div>
+    <div class="info-card">
+      <h6><i class="fa-solid fa-list-check me-2" style="color:#7c3aed;"></i>Required Fields</h6>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Full Name</div>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Mobile Number</div>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Country</div>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Playing Role</div>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Batting Style</div>
+    </div>
+    <div class="info-card">
+      <h6><i class="fa-solid fa-shield-halved me-2" style="color:#d97706;"></i>Guidelines</h6>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Use the player's real full name.</div>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Each mobile number can only be registered once.</div>
+      <div class="g-item"><i class="fa-solid fa-check" style="color:#10b981;margin-top:.15rem;"></i>Upload a clear portrait photo (recommended).</div>
+      <div class="g-item"><i class="fa-solid fa-xmark" style="color:#ef4444;margin-top:.15rem;"></i>Duplicates or fake submissions will be rejected.</div>
+    </div>
+    <div class="info-card">
+      <h6><i class="fa-solid fa-tag me-2" style="color:var(--primary);"></i>Submission Status</h6>
+      <div class="d-flex flex-column gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="af-badge af-badge-pending"><i class="fa-solid fa-clock"></i>Pending</span>
+          <span class="text-muted" style="font-size:.76rem;">Awaiting admin review</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="af-badge af-badge-approved"><i class="fa-solid fa-circle-check"></i>Approved</span>
+          <span class="text-muted" style="font-size:.76rem;">Visible on the website</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="af-badge af-badge-rejected"><i class="fa-solid fa-circle-xmark"></i>Rejected</span>
+          <span class="text-muted" style="font-size:.76rem;">Not published</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+function previewPhoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const p = document.getElementById('photoPreview');
+    const ph = document.getElementById('photoPlaceholder');
+    p.src = e.target.result; p.style.display = 'block'; ph.style.display = 'none';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+(function(){
+  const z = document.getElementById('photoZone');
+  if (!z) return;
+  z.addEventListener('dragover',  e => { e.preventDefault(); z.classList.add('ov'); });
+  z.addEventListener('dragleave', ()  => z.classList.remove('ov'));
+  z.addEventListener('drop',      e => {
+    e.preventDefault(); z.classList.remove('ov');
+    const fi = z.querySelector('input[type=file]');
+    if (fi && e.dataTransfer.files.length) { fi.files = e.dataTransfer.files; previewPhoto(fi); }
+  });
+})();
+(function(){
+  const si  = document.getElementById('teamSearch');
+  const sel = document.getElementById('id_team_select');
+  if (!si || !sel) return;
+  const all = Array.from(sel.options);
+  si.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    sel.innerHTML = '';
+    all.forEach(o => { if (!q || o.value === '' || o.text.toLowerCase().includes(q)) sel.appendChild(o.cloneNode(true)); });
+  });
+})();
+document.querySelectorAll('.ferr').forEach(d => {
+  const w = d.closest('.mb-3,.mb-0,.col-md-4,.col-md-6,.col-md-8');
+  if (!w) return;
+  const inp = w.querySelector('.form-control,.form-select');
+  if (inp) inp.classList.add('is-invalid');
+});
+const rf = document.getElementById('regForm');
+if (rf) rf.addEventListener('submit', () => {
+  const b = document.getElementById('submitBtn');
+  if (b) { b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Submitting…'; }
+});
+</script>
+{% endblock %}
+{% endblock %}

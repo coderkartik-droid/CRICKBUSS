@@ -1,0 +1,7 @@
+﻿/* Form primitives shared by public, dashboard, and Bootstrap-rendered forms. */
+.form-control, .form-select { max-width: 100%; }
+.form-control:focus-visible, .form-select:focus-visible { outline: 2px solid var(--dusty-rose); outline-offset: 2px; }
+.form-label { display: block; }
+.form-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.password-field { position: relative; display: block; width: 100%; min-width: 0; }
+.password-toggle { display: inline-flex; align-items: center; justify-content: center; }

@@ -331,14 +331,8 @@ def seed_everything():
         views_count=58, likes_count=4, is_published=True,
     )
     vcat, _ = VideoCategory.objects.get_or_create(name='T20 Highlights')
-    CricketVideo.objects.create(
-        title='TWC 2026: Match 1 - Royal Warriors vs Thunder Kings Highlights',
-        category=vcat,
-        description='Relive the final over thriller from Match 1 of the Thunder Warrior Cup 2026.',
-        video_url='https://www.youtube.com/embed/dQw4w9WgXcQ',
-        duration='08:20', views_count=1203, likes_count=72,
-        is_featured=True, is_active=True,
-    )
+    # Video seeding skipped: CricketVideo now uses a FileField (video_file).
+    # Upload videos through the Dashboard → Video Management page.
     alb, _ = PhotoAlbum.objects.get_or_create(
         title='TWC 2026 - Match Day',
         defaults={'category': PhotoAlbum.AlbumCategory.MATCH,

@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Player Requests — CRICKBUSS Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+{% endblock %}
+
+{% block content %}
+<div class="container af-page" style="max-width:1100px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <span class="current">Player Requests</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
+    <div>
+      <h1 class="af-page-title">
+        <span class="title-icon"><i class="fa-solid fa-user-clock"></i></span>
+        Player Requests
+        {% if pending_count > 0 %}
+          <span class="af-badge af-badge-pending ms-2" style="font-size:.78rem;">
+            <i class="fa-solid fa-clock"></i>{{ pending_count }} pending
+          </span>
+        {% endif %}
+      </h1>
+      <p class="af-page-desc">Review, approve or reject player registration submissions from the public.</p>
+    </div>
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Dashboard
+    </a>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="af-card mb-4" style="padding:1.25rem 1.5rem;">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-sm-6 col-lg-4">
+        <label class="af-label mb-1"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</label>
+        <div class="af-search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="q" value="{{ query }}" placeholder="Name, mobile or country…">
+        </div>
+      </div>
+      <div class="col-6 col-sm-3 col-lg-2">
+        <label class="af-label mb-1">Status</label>
+        <select name="status" class="form-select form-select-sm" style="border-radius:10px;border-width:1.5px;font-size:.85rem;">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+          {% for val,label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-sm-3 col-lg-3">
+        <label class="af-label mb-1">Country</label>
+        <select name="country" class="form-select form-select-sm" style="border-radius:10px;border-width:1.5px;font-size:.85rem;">
+          <option value="">All countries</option>
+          {% for c in countries %}
+            <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-lg-3 d-flex gap-2">
+        <button type="submit" class="btn btn-emerald btn-sm rounded-pill px-4">
+          <i class="fa-solid fa-filter me-1"></i>Apply
+        </button>
+        <a href="{% url 'dashboard:player_requests' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+          <i class="fa-solid fa-rotate me-1"></i>Clear
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results -->
+  <div class="af-table-card">
+    {% if page_obj.object_list %}
+    <div class="table-responsive af-table">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Photo</th>
+            <th>Player Name</th>
+            <th>Mobile</th>
+            <th>Team</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in page_obj %}
+          <tr>
+            <td>
+              <img src="{{ req.get_photo_url }}" alt="{{ req.full_name }}"
+                   class="rounded-circle object-fit-cover"
+                   style="width:42px;height:42px;border:2px solid var(--border-light,#e5e7eb);">
+            </td>
+            <td>
+              <div class="fw-semibold" style="font-size:.88rem;">{{ req.full_name }}</div>
+              {% if req.country %}<div class="text-muted" style="font-size:.76rem;">{{ req.country }}</div>{% endif %}
+            </td>
+            <td style="font-size:.83rem;font-family:monospace;white-space:nowrap;">{{ req.mobile_number }}</td>
+            <td>
+              <span class="af-badge af-badge-info" style="font-size:.72rem;">
+                {{ req.team.name|default:req.team_name_raw|default:"—" }}
+              </span>
+            </td>
+            <td style="font-size:.8rem;white-space:nowrap;color:var(--text-muted,#6b7280);">
+              {{ req.submitted_at|date:"M d, Y" }}<br>
+              <span style="font-size:.72rem;">{{ req.submitted_at|date:"H:i" }}</span>
+            </td>
+            <td>
+              {% if req.status == 'pending' %}
+                <span class="af-badge af-badge-pending"><i class="fa-solid fa-clock"></i>Pending</span>
+              {% elif req.status == 'approved' %}
+                <span class="af-badge af-badge-approved"><i class="fa-solid fa-circle-check"></i>Approved</span>
+              {% else %}
+                <span class="af-badge af-badge-rejected"><i class="fa-solid fa-circle-xmark"></i>Rejected</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'dashboard:player_request_detail' pk=req.pk %}"
+                 class="btn btn-sm btn-outline-secondary rounded-pill"
+                 style="font-size:.78rem;padding:.3rem .8rem;">
+                <i class="fa-solid fa-eye me-1"></i>View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2">
+      <small class="text-muted">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        of {{ page_obj.paginator.count }} request{{ page_obj.paginator.count|pluralize }}
+      </small>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link rounded-start" href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&country={{ country_filter }}&q={{ query }}">&laquo;</a>
+            </li>
+          {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}&status={{ status_filter }}&country={{ country_filter }}&q={{ query }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link rounded-end" href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&country={{ country_filter }}&q={{ query }}">&raquo;</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="af-empty">
+      <div class="af-empty-icon"><i class="fa-solid fa-inbox"></i></div>
+      {% if status_filter == 'pending' %}
+        <h5>No pending requests</h5>
+        <p>All player registrations have been reviewed.</p>
+      {% else %}
+        <h5>No results found</h5>
+        <p>Try adjusting your filters or search query.</p>
+      {% endif %}
+      <a href="{% url 'dashboard:player_requests' %}" class="btn btn-ghost btn-sm rounded-pill mt-2 px-4">
+        <i class="fa-solid fa-rotate me-1"></i>Reset Filters
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

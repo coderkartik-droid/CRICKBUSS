@@ -3,7 +3,11 @@ from django.views.generic import ListView, DetailView, TemplateView, View
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse
 from django.db.models import Q
+from django.db import transaction
+from django.urls import reverse
+from django.utils import timezone
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import (
     Match,
     Innings,
@@ -23,6 +27,7 @@ from apps.rankings.models import RankingEntry
 from apps.series.models import Series
 from apps.matches.services.scoring import record_delivery, undo_last_delivery
 from apps.matches.services.statistics import rebuild_points_table
+from .forms import PlayingXIForm
 
 
 class HomePageView(TemplateView):
@@ -81,14 +86,13 @@ class HomePageView(TemplateView):
         )[:5]
 
         # 5. Videos
-        context["home_videos"] = CricketVideo.objects.filter(
-            is_active=True
-        ).select_related("category")[:4]
+        context["home_videos"] = CricketVideo.objects.filter(is_active=True).order_by("-created_at")[:6]
 
         # 6. Featured Players & Teams
         context["featured_players"] = Player.objects.filter(
-            is_featured=True, is_active=True
-        ).select_related("primary_team")[:8]
+            is_featured=True, is_active=True,
+            registration_status=Player.RegistrationStatus.APPROVED,
+        ).select_related("primary_team").order_by("-created_at")[:8]
         context["featured_teams"] = Team.objects.filter(
             is_featured=True, is_active=True
         )[:6]
@@ -170,9 +174,7 @@ class MatchDetailView(DetailView):
             context["crease_batters"] = current_inn.batters.filter(
                 dismissal=PlayerMatchInnings.DismissalType.NOT_OUT
             )[:2]
-            context["current_bowler"] = current_inn.bowlers.order_by(
-                "-overs", "-balls"
-            ).first()
+            context["current_bowler"] = current_inn.current_bowler
             context["recent_balls"] = current_inn.ball_deliveries.order_by(
                 "-timestamp"
             )[:12]
@@ -217,6 +219,50 @@ class MatchDetailView(DetailView):
             context["is_saved"] = False
 
         return context
+
+
+class AssignPlayingXIView(LoginRequiredMixin, UserPassesTestMixin, View):
+    template_name = "matches/assign_playing_xi.html"
+
+    def get_match(self):
+        return get_object_or_404(
+            Match.objects.select_related("team1", "team2"),
+            slug=self.kwargs["slug"],
+        )
+
+    def test_func(self):
+        match = self.get_match()
+        user = self.request.user
+        return (
+            user.is_superuser
+            or getattr(user, "role", "") == "admin"
+            or (
+                getattr(user, "role", "") == "scorer"
+                and match.assigned_scorers.filter(pk=user.pk).exists()
+            )
+        )
+
+    def get(self, request, slug):
+        match = self.get_match()
+        form = PlayingXIForm(
+            team1=match.team1,
+            team2=match.team2,
+            initial={
+                "team1_players": match.team1_playing_xi.all(),
+                "team2_players": match.team2_playing_xi.all(),
+            },
+        )
+        return render(request, self.template_name, {"match": match, "form": form})
+
+    def post(self, request, slug):
+        match = self.get_match()
+        form = PlayingXIForm(request.POST, team1=match.team1, team2=match.team2)
+        if form.is_valid():
+            match.team1_playing_xi.set(form.cleaned_data["team1_players"])
+            match.team2_playing_xi.set(form.cleaned_data["team2_players"])
+            messages.success(request, "Playing XI assigned successfully.")
+            return redirect("matches:match_scorer", slug=match.slug)
+        return render(request, self.template_name, {"match": match, "form": form})
 
 
 class MatchLiveScoreJsonView(View):
@@ -388,7 +434,8 @@ class GlobalSearchView(View):
             )[:6]
 
             context["players"] = Player.objects.filter(
-                Q(name__icontains=query) | Q(nickname__icontains=query)
+                Q(name__icontains=query) | Q(nickname__icontains=query),
+                registration_status=Player.RegistrationStatus.APPROVED,
             ).select_related("primary_team")[:8]
 
             context["news"] = NewsArticle.objects.filter(
@@ -397,7 +444,7 @@ class GlobalSearchView(View):
             )[:6]
 
             context["videos"] = CricketVideo.objects.filter(
-                Q(title__icontains=query) | Q(description__icontains=query),
+                Q(title__icontains=query),
                 is_active=True,
             )[:6]
             context["series"] = Series.objects.filter(
@@ -444,7 +491,8 @@ class SearchSuggestJsonView(View):
 
         # Players
         players = Player.objects.filter(
-            Q(name__icontains=query) | Q(nickname__icontains=query)
+            Q(name__icontains=query) | Q(nickname__icontains=query),
+            registration_status=Player.RegistrationStatus.APPROVED,
         ).select_related("primary_team")[:4]
         for p in players:
             team_label = p.primary_team.short_name if p.primary_team else ""
@@ -499,9 +547,6 @@ class NewsletterSubscribeView(View):
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-
-
 def broadcast_live_match(match_id, payload):
     try:
         layer = get_channel_layer()
@@ -539,10 +584,45 @@ class LiveScorerPanelView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context["current_inn"] = current_inn
         context["team1_players"] = match.team1.players.filter(is_active=True)
         context["team2_players"] = match.team2.players.filter(is_active=True)
+        context["team1_xi"] = match.team1_playing_xi.all()
+        context["team2_xi"] = match.team2_playing_xi.all()
+        context["playing_xi_assigned"] = (
+            match.team1_playing_xi.count() == 11
+            and match.team2_playing_xi.count() == 11
+        )
+        context["can_score"] = match.status == Match.Status.LIVE and context["playing_xi_assigned"]
 
         if current_inn:
             context["batting_team_players"] = current_inn.batting_team.players.filter(is_active=True)
             context["bowling_team_players"] = current_inn.bowling_team.players.filter(is_active=True)
+            context["batting_xi"] = (
+                match.team1_playing_xi.all()
+                if current_inn.batting_team_id == match.team1_id
+                else match.team2_playing_xi.all()
+            )
+            context["bowling_xi"] = (
+                match.team1_playing_xi.all()
+                if current_inn.bowling_team_id == match.team1_id
+                else match.team2_playing_xi.all()
+            )
+            context["dismissed_batter_ids"] = set(
+                current_inn.batters.exclude(
+                    dismissal=PlayerMatchInnings.DismissalType.NOT_OUT
+                ).values_list("player_id", flat=True)
+            )
+            occupied_batter_ids = context["dismissed_batter_ids"] | {
+                player_id for player_id in (
+                    current_inn.striker_id,
+                    current_inn.non_striker_id,
+                ) if player_id
+            }
+            context["available_batting_xi"] = [
+                player for player in context["batting_xi"]
+                if player.id not in occupied_batter_ids
+            ]
+            context["needs_new_batsman"] = (
+                not current_inn.striker_id or not current_inn.non_striker_id
+            )
             context["active_batters"] = current_inn.batters.filter(
                 dismissal=PlayerMatchInnings.DismissalType.NOT_OUT
             )
@@ -576,14 +656,164 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def post(self, request, slug):
         match = get_object_or_404(Match, slug=slug)
+        action = request.POST.get("action")
         current_inn = match.current_innings
+
+        if action == "start_match":
+            with transaction.atomic():
+                match = Match.objects.select_for_update().get(pk=match.pk)
+                current_inn = match.current_innings
+                if current_inn:
+                    return JsonResponse({
+                        "success": True,
+                        "redirect": reverse("matches:match_scorer", kwargs={"slug": match.slug}),
+                    })
+                if match.status != Match.Status.UPCOMING:
+                    return JsonResponse(
+                        {"success": False, "message": "This match is not available to start."},
+                        status=400,
+                    )
+
+                team1_xi = list(match.team1_playing_xi.all())
+                team2_xi = list(match.team2_playing_xi.all())
+                if len(team1_xi) != 11 or len(team2_xi) != 11:
+                    return JsonResponse(
+                        {"success": False, "message": "Assign exactly 11 players for both teams first."},
+                        status=400,
+                    )
+                toss_winner = Team.objects.filter(
+                    pk=request.POST.get("toss_winner_id"),
+                    pk__in=(match.team1_id, match.team2_id),
+                ).first()
+                decision = request.POST.get("toss_decision")
+                if not toss_winner or decision not in (Match.TossDecision.BAT, Match.TossDecision.BOWL):
+                    return JsonResponse(
+                        {"success": False, "message": "Select a valid toss winner and decision."},
+                        status=400,
+                    )
+                try:
+                    overs = int(request.POST.get("overs") or match.overs_limit)
+                except (TypeError, ValueError):
+                    overs = 0
+                if not 1 <= overs <= 200:
+                    return JsonResponse(
+                        {"success": False, "message": "Overs must be between 1 and 200."},
+                        status=400,
+                    )
+
+                all_xi = team1_xi + team2_xi
+                opening_batter_one = Player.objects.filter(
+                    pk=request.POST.get("opening_batter_one"),
+                    pk__in=[p.pk for p in all_xi]
+                ).first()
+                opening_batter_two = Player.objects.filter(
+                    pk=request.POST.get("opening_batter_two"),
+                    pk__in=[p.pk for p in all_xi]
+                ).exclude(pk=getattr(opening_batter_one, "pk", None)).first()
+                opening_bowler = Player.objects.filter(
+                    pk=request.POST.get("opening_bowler"), pk__in=[p.pk for p in all_xi]
+                ).first()
+                if not opening_batter_one or not opening_batter_two or not opening_bowler:
+                    return JsonResponse(
+                        {"success": False, "message": "Select both opening batsmen and the opening bowler."},
+                        status=400,
+                    )
+
+                batting_team = toss_winner if decision == Match.TossDecision.BAT else (
+                    match.team2 if toss_winner == match.team1 else match.team1
+                )
+                bowling_team = match.team2 if batting_team == match.team1 else match.team1
+                batting_xi = team1_xi if batting_team == match.team1 else team2_xi
+                bowling_xi = team1_xi if bowling_team == match.team1 else team2_xi
+                batting_ids = {p.pk for p in batting_xi}
+                bowling_ids = {p.pk for p in bowling_xi}
+                if (
+                    opening_batter_one.pk not in batting_ids
+                    or opening_batter_two.pk not in batting_ids
+                    or opening_bowler.pk not in bowling_ids
+                ):
+                    return JsonResponse(
+                        {"success": False, "message": "Opening players must match the toss teams."},
+                        status=400,
+                    )
+
+                match.toss_winner = toss_winner
+                match.toss_decision = decision
+                match.overs_limit = overs
+                match.opening_batter_one = opening_batter_one
+                match.opening_batter_two = opening_batter_two
+                match.opening_bowler = opening_bowler
+                match.status = Match.Status.LIVE
+                match.actual_start_datetime = timezone.now()
+                match.current_innings_number = 1
+                match.save(update_fields=[
+                    "toss_winner", "toss_decision", "overs_limit",
+                    "opening_batter_one", "opening_batter_two", "opening_bowler",
+                    "status", "actual_start_datetime", "current_innings_number", "updated_at",
+                ])
+                innings, _ = Innings.objects.get_or_create(
+                    match=match,
+                    innings_number=1,
+                    defaults={
+                        "batting_team": batting_team,
+                        "bowling_team": bowling_team,
+                        "striker": opening_batter_one,
+                        "non_striker": opening_batter_two,
+                        "current_bowler": opening_bowler,
+                    },
+                )
+                for position, player in enumerate(batting_xi, start=1):
+                    PlayerMatchInnings.objects.get_or_create(
+                        innings=innings, player=player,
+                        defaults={"batting_position": position},
+                    )
+                for player in bowling_xi:
+                    BowlerMatchInnings.objects.get_or_create(innings=innings, player=player)
+                if not innings.striker_id:
+                    innings.striker = opening_batter_one
+                if not innings.non_striker_id:
+                    innings.non_striker = opening_batter_two
+                if not innings.current_bowler_id:
+                    innings.current_bowler = opening_bowler
+                innings.save(update_fields=["striker", "non_striker", "current_bowler"])
+
+            return JsonResponse({
+                "success": True,
+                "redirect": reverse("matches:match_scorer", kwargs={"slug": match.slug}),
+            })
+
         if not current_inn:
             return JsonResponse(
                 {"success": False, "message": "No active innings configured."},
                 status=400,
             )
 
-        action = request.POST.get("action")
+        if action == "select_new_batsman":
+            if current_inn.is_completed:
+                return JsonResponse({"success": False, "message": "This innings is complete."}, status=400)
+            player = Player.objects.filter(
+                pk=request.POST.get("batsman_id"),
+                pk__in=current_inn.match.team1_playing_xi.values_list("pk", flat=True)
+                if current_inn.batting_team_id == current_inn.match.team1_id
+                else current_inn.match.team2_playing_xi.values_list("pk", flat=True),
+            ).first()
+            if not player:
+                return JsonResponse({"success": False, "message": "Select a batsman from the assigned Playing XI."}, status=400)
+            if current_inn.batters.filter(player=player).exclude(
+                dismissal=PlayerMatchInnings.DismissalType.NOT_OUT,
+            ).exists() or player in (current_inn.striker, current_inn.non_striker):
+                return JsonResponse({"success": False, "message": "That player is already at the crease or has not been dismissed."}, status=400)
+            if current_inn.striker_id:
+                current_inn.non_striker = player
+            else:
+                current_inn.striker = player
+            current_inn.save(update_fields=["striker", "non_striker"])
+            return JsonResponse({
+                "success": True,
+                "striker_id": str(current_inn.striker_id or ""),
+                "non_striker_id": str(current_inn.non_striker_id or ""),
+                "message": "New batsman added.",
+            })
 
         if action == "record_ball":
             try:
@@ -595,6 +825,8 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                 except (TypeError, ValueError):
                     runs_off_bat_val = 0
                 is_wicket_val = request.POST.get("is_wicket") == "true"
+                dismissal_position = request.POST.get("dismissal_position", "striker")
+                dismissed_player_id = request.POST.get("dismissed_player_id") or None
 
                 if is_wicket_val and extra_type not in ("wide", "no_ball"):
                     runs_off_bat_val = 0
@@ -619,6 +851,8 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                     is_wicket=is_wicket_val,
                     commentary=request.POST.get("commentary", "").strip(),
                     is_free_hit=request.POST.get("is_free_hit") == "true",
+                    dismissed_player_id=dismissed_player_id,
+                    dismissal_position=dismissal_position,
                 )
             except (
                 TypeError,
@@ -656,6 +890,14 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                     "commentary": delivery.commentary,
                     "runs": current_inn.runs,
                     "wickets": current_inn.wickets,
+                    "striker_id": str(current_inn.striker_id or ""),
+                    "non_striker_id": str(current_inn.non_striker_id or ""),
+                    "current_bowler_id": str(current_inn.current_bowler_id or ""),
+                    "needs_batsman": not bool(current_inn.striker_id or current_inn.non_striker_id),
+                    "needs_new_batsman": not (
+                        current_inn.striker_id and current_inn.non_striker_id
+                    ),
+                    "over_complete": current_inn.balls == 0 and bool(delivery.over_number),
                 }
             )
 
@@ -685,6 +927,12 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                     "runs": current_inn.runs,
                     "wickets": current_inn.wickets,
                     "message": "Last delivery was undone.",
+                    "striker_id": str(current_inn.striker_id or ""),
+                    "non_striker_id": str(current_inn.non_striker_id or ""),
+                    "current_bowler_id": str(current_inn.current_bowler_id or ""),
+                    "needs_new_batsman": not (
+                        current_inn.striker_id and current_inn.non_striker_id
+                    ),
                 }
             )
 
@@ -705,6 +953,89 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
             return JsonResponse(
                 {"success": False, "message": "Invalid team selected."}, status=400
             )
+
+        elif action == "start_match":
+            if match.status != Match.Status.UPCOMING:
+                return JsonResponse(
+                    {"success": False, "message": "This match has already started."},
+                    status=400,
+                )
+            team1_xi = list(match.team1_playing_xi.values_list("id", flat=True))
+            team2_xi = list(match.team2_playing_xi.values_list("id", flat=True))
+            if len(team1_xi) != 11 or len(team2_xi) != 11:
+                return JsonResponse(
+                    {"success": False, "message": "Assign exactly 11 players for both teams first."},
+                    status=400,
+                )
+            toss_winner = Team.objects.filter(
+                id=request.POST.get("toss_winner_id"),
+                id__in=(match.team1_id, match.team2_id),
+            ).first()
+            decision = request.POST.get("toss_decision")
+            if not toss_winner or decision not in (Match.TossDecision.BAT, Match.TossDecision.BOWL):
+                return JsonResponse(
+                    {"success": False, "message": "Select a valid toss winner and decision."},
+                    status=400,
+                )
+            opening_batter_one = Player.objects.filter(
+                id=request.POST.get("opening_batter_one"),
+                id__in=team1_xi + team2_xi,
+            ).first()
+            opening_batter_two = Player.objects.filter(
+                id=request.POST.get("opening_batter_two"),
+                id__in=team1_xi + team2_xi,
+            ).exclude(id=getattr(opening_batter_one, "id", None)).first()
+            opening_bowler = Player.objects.filter(
+                id=request.POST.get("opening_bowler"),
+                id__in=team1_xi + team2_xi,
+            ).first()
+            if not opening_batter_one or not opening_batter_two or not opening_bowler:
+                return JsonResponse(
+                    {"success": False, "message": "Select both opening batsmen and the opening bowler."},
+                    status=400,
+                )
+            batting_team = toss_winner if decision == Match.TossDecision.BAT else (
+                match.team2 if toss_winner == match.team1 else match.team1
+            )
+            bowling_team = match.team2 if batting_team == match.team1 else match.team1
+            batting_ids = set(
+                match.team1_playing_xi.values_list("id", flat=True)
+                if batting_team == match.team1
+                else match.team2_playing_xi.values_list("id", flat=True)
+            )
+            bowling_ids = set(
+                match.team1_playing_xi.values_list("id", flat=True)
+                if bowling_team == match.team1
+                else match.team2_playing_xi.values_list("id", flat=True)
+            )
+            if (
+                opening_batter_one.id not in batting_ids
+                or opening_batter_two.id not in batting_ids
+                or opening_bowler.id not in bowling_ids
+            ):
+                return JsonResponse(
+                    {"success": False, "message": "Opening players must match the toss batting and bowling teams."},
+                    status=400,
+                )
+            match.toss_winner = toss_winner
+            match.toss_decision = decision
+            match.opening_batter_one = opening_batter_one
+            match.opening_batter_two = opening_batter_two
+            match.opening_bowler = opening_bowler
+            match.status = Match.Status.LIVE
+            match.actual_start_datetime = timezone.now()
+            match.current_innings_number = 1
+            match.save(update_fields=[
+                "toss_winner", "toss_decision", "opening_batter_one",
+                "opening_batter_two", "opening_bowler", "status",
+                "actual_start_datetime", "current_innings_number", "updated_at",
+            ])
+            Innings.objects.get_or_create(
+                match=match,
+                innings_number=1,
+                defaults={"batting_team": batting_team, "bowling_team": bowling_team},
+            )
+            return JsonResponse({"success": True, "redirect": reverse("matches:match_scorer", kwargs={"slug": match.slug})})
 
         elif action == "update_last_delivery":
             try:
@@ -931,6 +1262,8 @@ class LiveScorerActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                         },
                         status=400,
                     )
+            else:
+                match.winning_team = None
             if mom_id:
                 match.man_of_match = Player.objects.filter(id=mom_id).first()
 

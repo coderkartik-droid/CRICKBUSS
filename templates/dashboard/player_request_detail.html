@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}Player Request — {{ req.full_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+<style>
+.detail-section{background:var(--bg-card,#fff);border:1px solid var(--border-light,#e5e7eb);border-radius:16px;overflow:hidden;margin-bottom:1.25rem;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.detail-section-head{padding:1rem 1.5rem;border-bottom:1.5px solid var(--border-light,#e5e7eb);display:flex;align-items:center;gap:.55rem;font-size:.88rem;font-weight:700;background:var(--bg-subtle,#f9fafb);}
+.detail-section-head .dh-icon{width:28px;height:28px;border-radius:.45rem;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#fff;flex-shrink:0;}
+.detail-section-body{padding:1.25rem 1.5rem;}
+.field-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem 1.5rem;}
+.field-grid .fw{grid-column:span 3;}
+@media(max-width:768px){.field-grid{grid-template-columns:1fr 1fr;}.field-grid .fw{grid-column:span 2;}}
+@media(max-width:480px){.field-grid{grid-template-columns:1fr;}.field-grid .fw{grid-column:span 1;}}
+.fl-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted,#6b7280);margin-bottom:.25rem;}
+.fl-value{font-size:.9rem;font-weight:500;color:var(--text-main,#111);}
+.fl-value.empty{color:var(--text-muted,#9ca3af);font-style:italic;font-weight:400;}
+.req-photo{width:110px;height:110px;border-radius:14px;object-fit:cover;border:3px solid var(--primary,#0f766e);display:block;}
+.action-strip{background:var(--bg-card,#fff);border:1px solid var(--border-light,#e5e7eb);border-radius:16px;padding:1.25rem 1.5rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.btn-accept{background:#dcfce7;color:#166534;border:2px solid #86efac;font-weight:700;padding:.6rem 1.75rem;border-radius:10px;font-size:.92rem;transition:all .15s;cursor:pointer;}
+.btn-accept:hover{background:#bbf7d0;border-color:#4ade80;color:#14532d;}
+.btn-reject{background:#fee2e2;color:#991b1b;border:2px solid #fca5a5;font-weight:700;padding:.6rem 1.75rem;border-radius:10px;font-size:.92rem;transition:all .15s;cursor:pointer;}
+.btn-reject:hover{background:#fecaca;border-color:#f87171;color:#7f1d1d;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container af-page" style="max-width:900px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <a href="{% url 'dashboard:player_requests' %}">Player Requests</a>
+    <span class="sep">›</span>
+    <span class="current">{{ req.full_name }}</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
+    <div>
+      <h1 class="af-page-title">
+        <span class="title-icon"><i class="fa-solid fa-user-clock"></i></span>
+        Registration Request
+      </h1>
+      <p class="af-page-desc">Review all submitted details before accepting or rejecting.</p>
+    </div>
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      {% if req.status == 'pending' %}
+        <span class="af-badge af-badge-pending" style="font-size:.82rem;padding:.35rem .9rem;">
+          <i class="fa-solid fa-clock"></i>Pending Review
+        </span>
+      {% elif req.status == 'approved' %}
+        <span class="af-badge af-badge-approved" style="font-size:.82rem;padding:.35rem .9rem;">
+          <i class="fa-solid fa-circle-check"></i>Approved
+        </span>
+      {% else %}
+        <span class="af-badge af-badge-rejected" style="font-size:.82rem;padding:.35rem .9rem;">
+          <i class="fa-solid fa-circle-xmark"></i>Rejected
+        </span>
+      {% endif %}
+      <a href="{% url 'dashboard:player_requests' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-arrow-left me-1"></i>All Requests
+      </a>
+    </div>
+  </div>
+
+  <!-- Profile summary card -->
+  <div class="detail-section">
+    <div class="detail-section-body">
+      <div class="d-flex gap-4 flex-wrap align-items-start">
+        <img src="{{ req.get_photo_url }}" alt="{{ req.full_name }}" class="req-photo">
+        <div>
+          <h4 class="fw-bold mb-1">{{ req.full_name }}</h4>
+          <div class="text-muted small mb-2">
+            <i class="fa-solid fa-calendar-alt me-1"></i>
+            Submitted {{ req.submitted_at|date:"F d, Y" }} at {{ req.submitted_at|date:"H:i" }}
+          </div>
+          {% if req.status == 'rejected' and req.rejection_date %}
+            <div class="af-badge af-badge-rejected mt-1">
+              <i class="fa-solid fa-circle-xmark"></i>
+              Rejected on {{ req.rejection_date|date:"M d, Y H:i" }}
+            </div>
+          {% endif %}
+          {% if req.status == 'approved' and req.approved_player %}
+            <div class="mt-2">
+              <span class="af-badge af-badge-approved">
+                <i class="fa-solid fa-circle-check"></i>Approved
+              </span>
+              <span class="text-muted small ms-2">
+                Player profile:
+                <a href="{{ req.approved_player.get_absolute_url }}" class="fw-semibold">{{ req.approved_player.name }}</a>
+              </span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Personal Details -->
+  <div class="detail-section">
+    <div class="detail-section-head">
+      <span class="dh-icon" style="background:var(--primary,#0f766e);"><i class="fa-solid fa-id-card"></i></span>
+      Personal Details
+    </div>
+    <div class="detail-section-body">
+      <div class="field-grid">
+        <div>
+          <div class="fl-label">Full Name</div>
+          <div class="fl-value">{{ req.full_name }}</div>
+        </div>
+        <div>
+          <div class="fl-label">Mobile Number</div>
+          <div class="fl-value" style="font-family:monospace;">{{ req.mobile_number }}</div>
+        </div>
+        <div>
+          <div class="fl-label">Email Address</div>
+          <div class="fl-value {% if not req.email_address %}empty{% endif %}">
+            {{ req.email_address|default:"Not provided" }}
+          </div>
+        </div>
+        <div>
+          <div class="fl-label">Date of Birth</div>
+          <div class="fl-value {% if not req.date_of_birth %}empty{% endif %}">
+            {{ req.date_of_birth|date:"F d, Y"|default:"Not provided" }}
+          </div>
+        </div>
+        <div>
+          <div class="fl-label">Jersey Number</div>
+          <div class="fl-value {% if not req.jersey_number %}empty{% endif %}">
+            {{ req.jersey_number|default:"Not provided" }}
+          </div>
+        </div>
+        {% if req.full_address %}
+        <div class="fw">
+          <div class="fl-label">Address</div>
+          <div class="fl-value" style="white-space:pre-line;">{{ req.full_address }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Player Details -->
+  <div class="detail-section">
+    <div class="detail-section-head">
+      <span class="dh-icon" style="background:#7c3aed;"><i class="fa-solid fa-baseball-bat-ball"></i></span>
+      Player Details
+    </div>
+    <div class="detail-section-body">
+      <div class="field-grid">
+        <div>
+          <div class="fl-label">Country</div>
+          <div class="fl-value {% if not req.country %}empty{% endif %}">{{ req.country|default:"Not provided" }}</div>
+        </div>
+        <div>
+          <div class="fl-label">Playing Role</div>
+          <div class="fl-value">{{ req.get_playing_role_display }}</div>
+        </div>
+        <div>
+          <div class="fl-label">Batting Style</div>
+          <div class="fl-value">{{ req.get_batting_style_display }}</div>
+        </div>
+        <div>
+          <div class="fl-label">Bowling Style</div>
+          <div class="fl-value">{{ req.get_bowling_style_display }}</div>
+        </div>
+        <div>
+          <div class="fl-label">Team</div>
+          <div class="fl-value {% if not req.team and not req.team_name_raw %}empty{% endif %}">
+            {{ req.team.name|default:req.team_name_raw|default:"Not specified" }}
+          </div>
+        </div>
+        {% if req.short_bio %}
+        <div class="fw">
+          <div class="fl-label">Short Bio</div>
+          <div class="fl-value" style="white-space:pre-line;">{{ req.short_bio }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Action strip -->
+  {% if req.status == 'pending' %}
+  <div class="action-strip">
+    <span class="text-muted small me-auto" style="max-width:400px;">
+      <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>
+      These actions are permanent. Accept creates a live player profile. Reject keeps the record for reference.
+    </span>
+    <form method="post" action="{% url 'dashboard:player_request_action' pk=req.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="approve">
+      <button type="submit" class="btn-accept"
+              onclick="return confirm('Accept {{ req.full_name|escapejs }}?\n\nA live player profile will be created and immediately visible on the website.')">
+        <i class="fa-solid fa-circle-check me-2"></i>Accept Player
+      </button>
+    </form>
+    <form method="post" action="{% url 'dashboard:player_request_action' pk=req.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reject">
+      <button type="submit" class="btn-reject"
+              onclick="return confirm('Reject {{ req.full_name|escapejs }}?\n\nNo player profile will be created. The request record is kept for reference.')">
+        <i class="fa-solid fa-circle-xmark me-2"></i>Reject Player
+      </button>
+    </form>
+  </div>
+  {% elif req.status == 'rejected' %}
+  <div class="action-strip">
+    <span class="text-muted small me-auto">
+      <i class="fa-solid fa-rotate-left me-1"></i>
+      This request was rejected. You can still approve it to create a player profile.
+    </span>
+    <form method="post" action="{% url 'dashboard:player_request_action' pk=req.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="approve">
+      <button type="submit" class="btn-accept"
+              onclick="return confirm('Approve {{ req.full_name|escapejs }}? A live player profile will be created.')">
+        <i class="fa-solid fa-circle-check me-2"></i>Approve Anyway
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

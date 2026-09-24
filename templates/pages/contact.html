@@ -10,32 +10,44 @@
         <h2 class="fw-bold mb-2"><i class="fa-regular fa-envelope text-emerald me-2"></i> Contact Us</h2>
         <p class="text-muted small mb-4">Have feedback, advertising inquiries, or editorial tips? Get in touch with our operations desk.</p>
 
-        <form method="POST" onsubmit="event.preventDefault(); showToast('Thank you! Your message has been sent to our desk.', 'success'); this.reset();">
+        <form method="POST" action="{% url 'contact' %}" novalidate>
           {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger rounded-3 mb-3">
+              {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+            </div>
+          {% endif %}
+
           <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Your Name</label>
-              <input type="text" class="form-control" placeholder="Full name" required>
+              <label class="form-label small fw-semibold" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+              {{ form.full_name }}
+              {% if form.full_name.errors %}<div class="text-danger small mt-1">{% for e in form.full_name.errors %}{{ e }}{% endfor %}</div>{% endif %}
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Email Address</label>
-              <input type="email" class="form-control" placeholder="name@example.com" required>
+              <label class="form-label small fw-semibold" for="{{ form.mobile_number.id_for_label }}">{{ form.mobile_number.label }}</label>
+              {{ form.mobile_number }}
+              {% if form.mobile_number.errors %}<div class="text-danger small mt-1">{% for e in form.mobile_number.errors %}{{ e }}{% endfor %}</div>{% endif %}
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Subject</label>
-            <select class="form-select">
-              <option>General Inquiries & Feedback</option>
-              <option>Advertising & Sponsorship</option>
-              <option>Editorial Tips & Corrections</option>
-              <option>Technical Issue / Bug Report</option>
-            </select>
+            <label class="form-label small fw-semibold" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="text-danger small mt-1">{% for e in form.email.errors %}{{ e }}{% endfor %}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold" for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>
+            {{ form.subject }}
+            {% if form.subject.errors %}<div class="text-danger small mt-1">{% for e in form.subject.errors %}{{ e }}{% endfor %}</div>{% endif %}
           </div>
 
           <div class="mb-4">
-            <label class="form-label small fw-semibold">Message</label>
-            <textarea class="form-control" rows="5" placeholder="How can our team help you?" required></textarea>
+            <label class="form-label small fw-semibold" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+            {{ form.message }}
+            {% if form.message.errors %}<div class="text-danger small mt-1">{% for e in form.message.errors %}{{ e }}{% endfor %}</div>{% endif %}
           </div>
 
           <button type="submit" class="btn btn-emerald px-4 fw-bold">Send Message</button>

@@ -1,0 +1,4 @@
+﻿/* Shared button contract; variants and Bootstrap utility mappings are kept intact in style-core.css. */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; max-width: 100%; white-space: nowrap; }
+.btn-group, .btn-toolbar, .action-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.btn:focus-visible { outline: 2px solid var(--dusty-rose); outline-offset: 2px; }

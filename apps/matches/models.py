@@ -16,6 +16,8 @@ class Venue(models.Model):
     pitch_type = models.CharField(_('pitch characteristic'), max_length=100, default='Batting friendly with early bounce')
     avg_first_innings_score = models.PositiveIntegerField(_('average 1st innings score (T20/ODI)'), default=175)
     image = models.ImageField(upload_to='venues/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         verbose_name = _('Cricket Stadium / Venue')
@@ -37,6 +39,8 @@ class Ground(models.Model):
     surface = models.CharField(max_length=100, blank=True)
     capacity = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return f'{self.name} - {self.venue.name}'
@@ -50,6 +54,8 @@ class Tournament(models.Model):
     end_date = models.DateField(null=True, blank=True)
     overs_per_innings = models.PositiveSmallIntegerField(default=20)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         ordering = ['-start_date', 'name']
@@ -145,6 +151,7 @@ class Match(models.Model):
 
     # Schedule
     start_datetime = models.DateTimeField(_('start date & time'))
+    actual_start_datetime = models.DateTimeField(_('actual start date & time'), null=True, blank=True)
     end_datetime = models.DateTimeField(_('scheduled end time'), null=True, blank=True)
 
     # Lineups (Playing XI)
@@ -154,6 +161,9 @@ class Match(models.Model):
     team1_vice_captain = models.ForeignKey('players.Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='vice_captained_team1_matches')
     team2_captain = models.ForeignKey('players.Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='captained_team2_matches')
     team2_vice_captain = models.ForeignKey('players.Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='vice_captained_team2_matches')
+    opening_batter_one = models.ForeignKey('players.Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='opening_batter_one_matches')
+    opening_batter_two = models.ForeignKey('players.Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='opening_batter_two_matches')
+    opening_bowler = models.ForeignKey('players.Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='opening_bowler_matches')
 
     is_featured = models.BooleanField(_('featured match on hero section'), default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -214,6 +224,18 @@ class Innings(models.Model):
     free_hit = models.BooleanField(default=False)
     powerplay_overs = models.PositiveSmallIntegerField(default=6)
     break_reason = models.CharField(max_length=80, blank=True)
+    striker = models.ForeignKey(
+        'players.Player', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='striking_innings',
+    )
+    non_striker = models.ForeignKey(
+        'players.Player', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='non_striking_innings',
+    )
+    current_bowler = models.ForeignKey(
+        'players.Player', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='bowling_innings_current',
+    )
 
     class Meta:
         unique_together = ('match', 'innings_number')
@@ -319,6 +341,11 @@ class BallByBall(models.Model):
     batter = models.ForeignKey('players.Player', on_delete=models.SET_NULL, related_name='balls_faced', null=True, blank=True)
     bowler = models.ForeignKey('players.Player', on_delete=models.SET_NULL, related_name='balls_bowled', null=True, blank=True)
     non_striker = models.ForeignKey('players.Player', on_delete=models.CASCADE, related_name='balls_non_striker', null=True, blank=True)
+    dismissed_player = models.ForeignKey(
+        'players.Player', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='dismissal_deliveries',
+    )
+    dismissal_position = models.CharField(max_length=20, blank=True)
 
     runs_off_bat = models.PositiveSmallIntegerField(default=0)
     is_four = models.BooleanField(default=False)

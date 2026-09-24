@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import VideoCategory, CricketVideo, VideoLike, VideoBookmark
+from django.utils.html import format_html
+
+from .models import (
+    CricketVideo,
+    VideoBookmark,
+    VideoCategory,
+    VideoLike,
+)
 
 @admin.register(VideoCategory)
 class VideoCategoryAdmin(admin.ModelAdmin):

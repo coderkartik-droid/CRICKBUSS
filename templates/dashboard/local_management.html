@@ -1,163 +1,300 @@
 {% extends 'base.html' %}
+{% block title %}{{ title }} — CRICKBUSS Admin{% endblock %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+<style>
+/* venue sub-form */
+.venue-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem 1.25rem; }
+.venue-grid .vf-wide { grid-column:span 2; }
+@media(max-width:768px){ .venue-grid { grid-template-columns:1fr; } .venue-grid .vf-wide { grid-column:span 1; } }
+/* select[multiple] */
+.af-field select[multiple] { min-height: 110px; height:auto; }
+/* subsection labels */
+.af-sub-head {
+  font-size:.76rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.07em; color:var(--primary,#0f766e);
+  border-bottom:1px dashed var(--border-light,#e5e7eb);
+  padding-bottom:.4rem; margin:1.25rem 0 .9rem;
+  grid-column:span 2;
+}
+@media(max-width:768px){ .af-sub-head { grid-column:span 1; } }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div><h2 class="fw-bold mb-1">{{ title }}</h2><p class="text-muted mb-0">All records are stored and managed locally.</p></div>
-    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
-  </div>
-  <div class="content-card p-4 mb-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-      <div>
-        <h5 class="fw-bold mb-1">Create or Edit {{ model_name|title }}</h5>
-        <p class="text-muted small mb-0">
-          {% if entity == 'match' %}Create a match after tournament, ground, teams, and scorer accounts exist.
-          {% elif entity == 'player' %}Create teams before assigning players.
-          {% elif entity == 'ground' %}Select an existing venue or create one below, then save the ground.
-          {% else %}Complete the required fields to save this local record.{% endif %}
-        </p>
-      </div>
+<div class="container af-page" style="max-width:1080px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb" aria-label="breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <span class="current">{{ title }}</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
+    <div>
+      <h1 class="af-page-title">
+        <span class="title-icon">
+          {% if entity == 'match' %}<i class="fa-solid fa-baseball-bat-ball"></i>
+          {% elif entity == 'player' %}<i class="fa-solid fa-user"></i>
+          {% elif entity == 'team' %}<i class="fa-solid fa-shield-halved"></i>
+          {% elif entity == 'tournament' %}<i class="fa-solid fa-trophy"></i>
+          {% elif entity == 'ground' %}<i class="fa-solid fa-location-dot"></i>
+          {% else %}<i class="fa-solid fa-clipboard-list"></i>{% endif %}
+        </span>
+        {{ title }}
+      </h1>
+      <p class="af-page-desc">
+        {% if entity == 'match' %}Create a match after tournament, ground, teams and scorer accounts exist.
+        {% elif entity == 'player' %}Create teams before assigning players.
+        {% elif entity == 'ground' %}Select an existing venue or create one below, then save the ground.
+        {% else %}Complete the required fields to save this local record.{% endif %}
+      </p>
     </div>
-    <form method="post" action="{% url 'dashboard:local_management' entity=entity %}" enctype="multipart/form-data" class="management-form" id="localManagementForm" novalidate>
-      {% csrf_token %}
-      <input type="hidden" name="record_id" value="{{ editing_id }}">
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+    </a>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ═══ LEFT: Form ═══ -->
+    <div class="col-lg-7">
+
+      <!-- Non-field / lookup errors -->
       {% if lookup_error %}
-      <div class="alert alert-danger" role="alert">{{ lookup_error }}</div>
+        <div class="alert alert-danger rounded-3 d-flex gap-2 mb-3" role="alert">
+          <i class="fa-solid fa-circle-exclamation flex-shrink-0 mt-1"></i>
+          <div>{{ lookup_error }}</div>
+        </div>
       {% endif %}
       {% if form.non_field_errors %}
-      <div class="alert alert-danger" role="alert">
-        <strong>Could not save this {{ model_name }}.</strong>
-        {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
-      </div>
-      {% endif %}
-      <section class="form-section">
-        <h6><i class="fa-solid fa-clipboard-list me-2"></i>{% if entity == 'match' %}Basic Match Information{% else %}{{ model_name|title }} Information{% endif %}</h6>
-        {% for field in form %}
-        {% if entity == 'match' and field.name == 'tournament' %}<h6 class="form-subsection-title">Match Setup</h6>{% endif %}
-        {% if entity == 'match' and field.name == 'team1' %}<h6 class="form-subsection-title">Teams & Lineups</h6>{% endif %}
-        {% if entity == 'match' and field.name == 'assigned_scorers' %}<h6 class="form-subsection-title">Officials & Scoring</h6>{% endif %}
-        {% if entity == 'match' and field.name == 'pitch_report' %}<h6 class="form-subsection-title">Conditions & Schedule</h6>{% endif %}
-        <div class="form-field">
-          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required-mark">*</span>{% endif %}</label>
-          {{ field }}
-          {% if field.errors %}<div class="text-danger small mt-1" role="alert">
-            {% for error in field.errors %}<div>{{ error }}</div>{% endfor %}
-          </div>{% endif %}
-          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-          {% if entity == 'ground' and field.name == 'venue' %}
-            <button type="button" class="btn btn-sm btn-outline-secondary align-self-start" id="toggleVenueForm"{% if not has_venues %} hidden{% endif %}>
-              <i class="fa-solid fa-plus me-1"></i> Add Venue
-            </button>
-          {% endif %}
-          {% if entity == 'match' and field.name == 'tournament' and not form.fields.tournament.queryset.exists %}
-            <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'dashboard:local_management' entity='tournament' %}">
-              <i class="fa-solid fa-plus me-1"></i> Create Tournament
-            </a>
-          {% elif entity == 'match' and field.name == 'ground' and not form.fields.ground.queryset.exists %}
-            <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'dashboard:local_management' entity='ground' %}">
-              <i class="fa-solid fa-plus me-1"></i> Add Ground
-            </a>
-          {% elif entity == 'match' and field.name == 'team1' and not form.fields.team1.queryset.exists %}
-            <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'dashboard:local_management' entity='team' %}">
-              <i class="fa-solid fa-plus me-1"></i> Add Team
-            </a>
-          {% elif entity == 'match' and field.name == 'team2' and not form.fields.team1.queryset.exists %}
-            <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'dashboard:local_management' entity='team' %}">
-              <i class="fa-solid fa-plus me-1"></i> Add Team
-            </a>
-          {% elif entity == 'match' and field.name == 'assigned_scorers' and not form.fields.assigned_scorers.queryset.exists %}
-            <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'dashboard:managed_users' %}?role=scorer">
-              <i class="fa-solid fa-plus me-1"></i> Add Scorer
-            </a>
-          {% elif entity == 'player' and field.name == 'primary_team' and not form.fields.primary_team.queryset.exists %}
-            <a class="btn btn-sm btn-outline-secondary mt-2" href="{% url 'dashboard:local_management' entity='team' %}">
-              <i class="fa-solid fa-plus me-1"></i> Add Team
-            </a>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </section>
-      {% if entity == 'ground' %}
-      <section class="form-section venue-create-panel" id="venueCreatePanel"{% if has_venues and not venue_form.errors %} hidden{% endif %}>
-        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <div class="alert alert-danger rounded-3 d-flex gap-2 mb-3" role="alert">
+          <i class="fa-solid fa-circle-exclamation flex-shrink-0 mt-1"></i>
           <div>
-            <h6 class="mb-1"><i class="fa-solid fa-location-dot me-2"></i>Create New Venue</h6>
-            <p class="text-muted small mb-0">Save a venue here and it will be selected for this ground.</p>
+            <strong>Could not save this {{ model_name }}.</strong>
+            {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
           </div>
-          <button type="button" class="btn btn-sm btn-ghost" id="closeVenueForm"{% if not has_venues %} hidden{% endif %}>Close</button>
         </div>
-        {% if venue_form.non_field_errors %}
-          <div class="alert alert-danger">{{ venue_form.non_field_errors }}</div>
-        {% endif %}
-        <div class="venue-form-grid">
-          {% for field in venue_form %}
-          <div class="form-field{% if field.name == 'description' %} venue-form-wide{% endif %}">
-            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required-mark">*</span>{% endif %}</label>
-            {{ field }}
-            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-          </div>
-          {% endfor %}
-        </div>
-        <input type="hidden" name="create_venue" id="createVenueInput" value="{% if not has_venues or venue_form.errors %}1{% else %}0{% endif %}">
-        <p class="form-text mb-0">When enabled, the venue is created and assigned while saving this ground.</p>
-      </section>
       {% endif %}
-      <div class="form-actions">
-        <button class="btn btn-emerald" type="submit" id="saveLocalRecordBtn" name="save_record">
-          <i class="fa-solid fa-check me-2"></i>Save {{ model_name|title }}
-        </button>
-        <a class="btn btn-ghost" href="{% url 'dashboard:local_management' entity=entity %}">Cancel</a>
-      </div>
-    </form>
-  </div>
-  <div class="content-card overflow-hidden">
-    <div class="table-responsive"><table class="table sports-table mb-0">
-      <thead><tr><th>Record</th><th>Identifier</th><th></th></tr></thead>
-      <tbody>{% for record in records %}<tr><td>{{ record }}</td><td class="text-muted">{{ record.pk }}</td><td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="?edit={{ record.pk }}">Edit</a></td></tr>{% empty %}<tr><td colspan="3" class="text-center text-muted py-4">No local records yet.</td></tr>{% endfor %}</tbody>
-    </table></div>
-  </div>
-</div>
-<script>
-  (function () {
-    const form = document.getElementById('localManagementForm');
-    const saveBtn = document.getElementById('saveLocalRecordBtn');
-    if (form && saveBtn) {
-      form.addEventListener('submit', function (event) {
-        if (form.dataset.submitting === '1') {
-          event.preventDefault();
-          return;
-        }
-        form.dataset.submitting = '1';
-        saveBtn.disabled = true;
-        saveBtn.setAttribute('aria-busy', 'true');
-        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Saving...';
-      });
-    }
 
-    const panel = document.getElementById('venueCreatePanel');
-    const toggle = document.getElementById('toggleVenueForm');
-    const close = document.getElementById('closeVenueForm');
-    const input = document.getElementById('createVenueInput');
-    if (!panel || !input) return;
-    const canClose = Boolean(toggle && close && {{ has_venues|yesno:"true,false" }});
-    function openPanel() {
-      panel.hidden = false;
-      input.value = '1';
-      if (toggle) toggle.hidden = true;
-      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    function closePanel() {
-      if (!canClose) return;
-      panel.hidden = true;
-      input.value = '0';
-      if (toggle) toggle.hidden = false;
-    }
-    if (toggle) toggle.addEventListener('click', openPanel);
-    if (close) close.addEventListener('click', closePanel);
-    {% if entity == 'ground' and venue_form.errors or entity == 'ground' and not has_venues %}openPanel();{% endif %}
-  }());
+      <form method="post"
+            action="{% url 'dashboard:local_management' entity=entity %}"
+            enctype="multipart/form-data"
+            class="management-form"
+            id="localManagementForm"
+            novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="record_id" value="{{ editing_id }}">
+
+        <!-- ── Main fields card ── -->
+        <div class="af-card">
+          <div class="af-section-head">
+            <span class="af-section-icon" style="background:var(--primary);">
+              {% if entity == 'match' %}<i class="fa-solid fa-baseball-bat-ball"></i>
+              {% elif entity == 'player' %}<i class="fa-solid fa-user"></i>
+              {% elif entity == 'team' %}<i class="fa-solid fa-shield-halved"></i>
+              {% elif entity == 'tournament' %}<i class="fa-solid fa-trophy"></i>
+              {% elif entity == 'ground' %}<i class="fa-solid fa-location-dot"></i>
+              {% else %}<i class="fa-solid fa-clipboard-list"></i>{% endif %}
+            </span>
+            {% if editing_id %}Edit{% else %}Create{% endif %} {{ model_name|title }}
+          </div>
+
+          <div class="af-grid-2">
+
+            {% for field in form %}
+
+              {# ── Section sub-headings for match form ── #}
+              {% if entity == 'match' and field.name == 'tournament' %}
+                <div class="af-sub-head"><i class="fa-solid fa-link me-1"></i>Match Setup</div>
+              {% endif %}
+              {% if entity == 'match' and field.name == 'team1' %}
+                <div class="af-sub-head"><i class="fa-solid fa-users me-1"></i>Teams &amp; Lineups</div>
+              {% endif %}
+              {% if entity == 'match' and field.name == 'assigned_scorers' %}
+                <div class="af-sub-head"><i class="fa-solid fa-tower-broadcast me-1"></i>Officials &amp; Scoring</div>
+              {% endif %}
+              {% if entity == 'match' and field.name == 'pitch_report' %}
+                <div class="af-sub-head"><i class="fa-solid fa-cloud-sun me-1"></i>Conditions &amp; Schedule</div>
+              {% endif %}
+
+              {# ── Wide fields (textareas, multi-selects, checkboxes) ── #}
+              {% if field.field.widget.attrs.rows or 'Textarea' in field.field.widget|stringformat:'s' or 'CheckboxSelectMultiple' in field.field.widget|stringformat:'s' or 'SelectMultiple' in field.field.widget|stringformat:'s' or field.name == 'biography' or field.name == 'history' or field.name == 'records' or field.name == 'achievements' or field.name == 'pitch_report' or field.name == 'description' or field.name == 'team1_playing_xi' or field.name == 'team2_playing_xi' or field.name == 'assigned_scorers' %}
+                <div class="af-field af-col-span-2">
+              {% else %}
+                <div class="af-field">
+              {% endif %}
+
+                <label class="af-label" for="{{ field.id_for_label }}">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="req">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="af-error">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>{% for e in field.errors %}{{ e }}{% if not forloop.last %} · {% endif %}{% endfor %}</span>
+                  </div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="af-hint">{{ field.help_text }}</div>
+                {% endif %}
+
+                {# ── Inline quick-create links ── #}
+                {% if entity == 'ground' and field.name == 'venue' %}
+                  <button type="button" class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" id="toggleVenueForm" {% if not has_venues %}hidden{% endif %}>
+                    <i class="fa-solid fa-plus me-1"></i>Add Venue
+                  </button>
+                {% endif %}
+                {% if entity == 'match' and field.name == 'tournament' and not form.fields.tournament.queryset.exists %}
+                  <a class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" href="{% url 'dashboard:local_management' entity='tournament' %}"><i class="fa-solid fa-plus me-1"></i>Create Tournament</a>
+                {% elif entity == 'match' and field.name == 'ground' and not form.fields.ground.queryset.exists %}
+                  <a class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" href="{% url 'dashboard:local_management' entity='ground' %}"><i class="fa-solid fa-plus me-1"></i>Add Ground</a>
+                {% elif entity == 'match' and field.name == 'team1' and not form.fields.team1.queryset.exists %}
+                  <a class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" href="{% url 'dashboard:local_management' entity='team' %}"><i class="fa-solid fa-plus me-1"></i>Add Team</a>
+                {% elif entity == 'match' and field.name == 'assigned_scorers' and not form.fields.assigned_scorers.queryset.exists %}
+                  <a class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" href="{% url 'dashboard:managed_users' %}?role=scorer"><i class="fa-solid fa-plus me-1"></i>Add Scorer</a>
+                {% elif entity == 'player' and field.name == 'primary_team' and not form.fields.primary_team.queryset.exists %}
+                  <a class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" href="{% url 'dashboard:local_management' entity='team' %}"><i class="fa-solid fa-plus me-1"></i>Add Team</a>
+                {% endif %}
+
+              </div>
+            {% endfor %}
+
+          </div><!-- /af-grid-2 -->
+
+          <!-- ── Action bar ── -->
+          <div class="af-actions">
+            <button class="btn btn-emerald" type="submit" id="saveLocalRecordBtn">
+              <i class="fa-solid fa-floppy-disk me-2"></i>
+              {% if editing_id %}Update{% else %}Save{% endif %} {{ model_name|title }}
+            </button>
+            <a class="btn btn-ghost" href="{% url 'dashboard:local_management' entity=entity %}">
+              <i class="fa-solid fa-xmark me-1"></i>Cancel
+            </a>
+          </div>
+        </div><!-- /af-card (main) -->
+
+        <!-- ── Venue sub-form (ground only) ── -->
+        {% if entity == 'ground' %}
+        <div class="af-card" id="venueCreatePanel" {% if has_venues and not venue_form.errors %}hidden{% endif %}>
+          <div class="af-section-head">
+            <span class="af-section-icon" style="background:#7c3aed;"><i class="fa-solid fa-map-location-dot"></i></span>
+            Create New Venue
+            {% if has_venues %}
+              <button type="button" class="btn btn-sm btn-ghost ms-auto rounded-pill" id="closeVenueForm">
+                <i class="fa-solid fa-xmark me-1"></i>Close
+              </button>
+            {% endif %}
+          </div>
+          <p class="text-muted small mb-3">Save a venue here and it will be auto-selected for this ground.</p>
+
+          {% if venue_form.non_field_errors %}
+            <div class="alert alert-danger rounded-3 mb-3">{{ venue_form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="venue-grid">
+            {% for field in venue_form %}
+              <div class="af-field {% if field.name == 'description' or field.name == 'address' %}vf-wide{% endif %}">
+                <label class="af-label" for="{{ field.id_for_label }}">
+                  {{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% for e in field.errors %}<div class="af-error"><i class="fa-solid fa-circle-exclamation"></i><span>{{ e }}</span></div>{% endfor %}
+                {% if field.help_text %}<div class="af-hint">{{ field.help_text }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="create_venue" id="createVenueInput" value="{% if not has_venues or venue_form.errors %}1{% else %}0{% endif %}">
+          <p class="af-hint mt-2">When enabled the venue is created and assigned while saving this ground.</p>
+        </div>
+        {% endif %}
+
+      </form>
+    </div><!-- /col-lg-7 -->
+
+    <!-- ═══ RIGHT: Records table ═══ -->
+    <div class="col-lg-5">
+      <div class="af-table-card">
+        <div class="af-table-header">
+          <p class="af-table-title mb-0">
+            <i class="fa-solid fa-list-ul me-1" style="color:var(--primary);"></i>
+            Existing {{ model_name|title }}s
+            <span class="badge bg-secondary rounded-pill ms-1" style="font-size:.72rem;">{{ records|length }}</span>
+          </p>
+        </div>
+        <div class="table-responsive af-table">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>Name / Record</th>
+                <th class="text-end" style="width:80px;">Edit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+              <tr>
+                <td>
+                  <div class="fw-semibold" style="font-size:.88rem;">{{ record }}</div>
+                  <div class="text-muted" style="font-size:.72rem; font-family:monospace;">{{ record.pk }}</div>
+                </td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-secondary rounded-pill" style="font-size:.75rem;padding:.25rem .7rem;" href="?edit={{ record.pk }}">
+                    <i class="fa-solid fa-pen"></i>
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="2">
+                  <div class="af-empty">
+                    <div class="af-empty-icon"><i class="fa-solid fa-inbox"></i></div>
+                    <h5>No records yet</h5>
+                    <p>Use the form to create your first {{ model_name }}.</p>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /col-lg-5 -->
+
+  </div><!-- /row -->
+</div>
+
+<script>
+(function () {
+  /* Submit guard */
+  const form = document.getElementById('localManagementForm');
+  const saveBtn = document.getElementById('saveLocalRecordBtn');
+  if (form && saveBtn) {
+    form.addEventListener('submit', function (e) {
+      if (form.dataset.submitting === '1') { e.preventDefault(); return; }
+      form.dataset.submitting = '1';
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Saving…';
+    });
+  }
+
+  /* Venue panel toggle (ground entity) */
+  const panel  = document.getElementById('venueCreatePanel');
+  const toggle = document.getElementById('toggleVenueForm');
+  const close  = document.getElementById('closeVenueForm');
+  const input  = document.getElementById('createVenueInput');
+  if (!panel || !input) return;
+  const canClose = Boolean(toggle && close && {{ has_venues|yesno:"true,false" }});
+
+  function openPanel()  { panel.hidden = false; input.value = '1'; if (toggle) toggle.hidden = true;  panel.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  function closePanel() { if (!canClose) return; panel.hidden = true; input.value = '0'; if (toggle) toggle.hidden = false; }
+
+  if (toggle) toggle.addEventListener('click', openPanel);
+  if (close)  close.addEventListener('click',  closePanel);
+  {% if entity == 'ground' and venue_form.errors or entity == 'ground' and not has_venues %}openPanel();{% endif %}
+}());
 </script>
 {% endblock %}

@@ -321,34 +321,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 8. Interactive Password Strength Indicator
-    const passwordInputs = document.querySelectorAll('input[type="password"][name*="password"]');
-    passwordInputs.forEach(input => {
-        const wrapper = input.parentElement;
-        if (wrapper && !wrapper.querySelector('.password-toggle')) {
-            wrapper.classList.add('position-relative');
+    // 8. Reusable password field component and strength indicator
+    function setupPasswordField(input) {
+        if (!input.matches('input[type="password"][name*="password"]')) return;
+
+        let field = input.closest('.password-field');
+        if (!field || !field.contains(input)) {
+            field = document.createElement('span');
+            field.className = 'password-field';
+            input.parentNode.insertBefore(field, input);
+            field.appendChild(input);
+        }
+
+        if (!field.querySelector('.password-toggle')) {
             const toggle = document.createElement('button');
             toggle.type = 'button';
-            toggle.className = 'password-toggle btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 p-1 border-0 text-muted';
+            toggle.className = 'password-toggle';
             toggle.setAttribute('aria-label', 'Show password');
-            toggle.innerHTML = '<i class="fa-regular fa-eye"></i>';
-            toggle.addEventListener('click', () => {
-                const visible = input.type === 'text';
-                input.type = visible ? 'password' : 'text';
-                toggle.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
-                toggle.innerHTML = visible
-                    ? '<i class="fa-regular fa-eye"></i>'
-                    : '<i class="fa-regular fa-eye-slash"></i>';
-            });
-            wrapper.appendChild(toggle);
+            toggle.innerHTML = '<i class="fa-regular fa-eye" aria-hidden="true"></i>';
+            field.appendChild(toggle);
         }
+
         if (input.name === 'password' || input.name === 'new_password1' || input.name === 'password1') {
+            if (field.nextElementSibling?.classList.contains('password-strength-bar')) return;
             const barContainer = document.createElement('div');
             barContainer.className = 'password-strength-bar';
             const fill = document.createElement('div');
             fill.className = 'password-strength-fill';
             barContainer.appendChild(fill);
-            input.parentNode.insertBefore(barContainer, input.nextSibling);
+            field.parentNode.insertBefore(barContainer, field.nextSibling);
 
             input.addEventListener('input', () => {
                 const val = input.value;
@@ -380,7 +381,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+    }
+
+    function setupPasswordFields(root = document) {
+        root.querySelectorAll('input[type="password"][name*="password"]').forEach(setupPasswordField);
+    }
+
+    setupPasswordFields();
+
+    // Delegation keeps toggles working for dynamically rendered forms and modals.
+    document.addEventListener('click', (event) => {
+        const toggle = event.target.closest('.password-toggle');
+        if (!toggle) return;
+
+        const input = toggle.closest('.password-field')?.querySelector('input');
+        if (!input) return;
+
+        const visible = input.type === 'text';
+        input.type = visible ? 'password' : 'text';
+        toggle.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+        
+        const icon = toggle.querySelector('i');
+        if (icon) {
+            icon.className = visible ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+        }
     });
+
+    new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    if (node.matches('input[type="password"][name*="password"]')) setupPasswordField(node);
+                    setupPasswordFields(node);
+                }
+            });
+        });
+    }).observe(document.body, { childList: true, subtree: true });
 
     // 9. Premium Card Hover Effects Enhancement
     document.querySelectorAll('.content-card, .team-card, .player-card, .live-match-card').forEach(card => {
@@ -451,6 +487,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(style);
+
+    // 13. Media Carousel Horizontal Scrolling Enhancement
+    const carousels = document.querySelectorAll('.media-carousel-track');
+    
+    carousels.forEach(track => {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+        let isDragging = false;
+
+        // Mouse wheel scrolling
+        track.addEventListener('wheel', (e) => {
+            if (e.deltaY !== 0) {
+                e.preventDefault();
+                track.scrollLeft += e.deltaY;
+            }
+        });
+
+        // Touch swipe support
+        track.addEventListener('touchstart', (e) => {
+            isDown = true;
+            startX = e.touches[0].pageX - track.offsetLeft;
+            scrollLeft = track.scrollLeft;
+        });
+
+        track.addEventListener('touchmove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.touches[0].pageX - track.offsetLeft;
+            const walk = (x - startX) * 2;
+            track.scrollLeft = scrollLeft - walk;
+        });
+
+        track.addEventListener('touchend', () => {
+            isDown = false;
+        });
+
+        // Mouse drag support for desktop
+        track.addEventListener('mousedown', (e) => {
+            isDown = true;
+            isDragging = false;
+            startX = e.pageX - track.offsetLeft;
+            scrollLeft = track.scrollLeft;
+        });
+
+        track.addEventListener('mouseleave', () => {
+            isDown = false;
+        });
+
+        track.addEventListener('mouseup', () => {
+            isDown = false;
+        });
+
+        track.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - track.offsetLeft;
+            const walk = (x - startX) * 2;
+            track.scrollLeft = scrollLeft - walk;
+            isDragging = true;
+        });
+
+        // Prevent link clicks when dragging
+        track.addEventListener('click', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+    });
 
     // 12. Premium Loading States for Forms
     const mainContent = document.querySelector('main');

@@ -1,6 +1,36 @@
+import uuid
+
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+
+
+class ContactMessage(models.Model):
+    """A message submitted through the public Contact Us form.
+
+    Stored for review in the Admin Portal inbox. No login and no email are
+    required from the visitor; the message is simply persisted here.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    full_name = models.CharField(_('full name'), max_length=120)
+    mobile_number = models.CharField(_('mobile number'), max_length=30, default='')
+    email = models.EmailField(_('email address'))
+    subject = models.CharField(_('subject'), max_length=200)
+    message = models.TextField(_('message'))
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    is_read = models.BooleanField(_('read'), default=False)
+    is_replied = models.BooleanField(_('replied'), default=False)
+    is_deleted = models.BooleanField(_('deleted'), default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Contact Message')
+        verbose_name_plural = _('Contact Messages')
+
+    def __str__(self):
+        return f'{self.subject} — {self.full_name}'
+
 
 class SavedMatch(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='saved_matches')
@@ -44,6 +74,7 @@ class SiteSetting(models.Model):
     """
     site_name = models.CharField(_('website name'), max_length=100, default='CrickScore Live')
     site_tagline = models.CharField(_('site tagline'), max_length=200, default='Fastest Live Scores & Cricket Hub')
+    about_us = models.TextField(_('about us description'), blank=True, default='')
     logo = models.ImageField(_('site logo'), upload_to='branding/', blank=True, null=True)
     favicon = models.ImageField(_('site favicon'), upload_to='branding/', blank=True, null=True)
     primary_color = models.CharField(_('primary theme color'), max_length=7, default='#047857')

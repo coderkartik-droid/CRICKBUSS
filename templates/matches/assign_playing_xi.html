@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Playing XI - {{ match.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="mb-4">
+    <a href="{% url 'matches:match_scorer' slug=match.slug %}" class="btn btn-ghost btn-sm mb-3">
+      <i class="fa-solid fa-arrow-left me-1"></i> Back to Start Scoring
+    </a>
+    <span class="badge badge-premium d-block mb-2">MATCH SETUP</span>
+    <h1 class="fw-bold mb-1">Assign Playing XI</h1>
+    <p class="text-muted mb-0">{{ match.team1.name }} vs {{ match.team2.name }}</p>
+  </div>
+
+  <form method="post" class="d-flex flex-column gap-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {% for field in form %}
+      <section class="content-card p-4">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+          <h2 class="h5 fw-bold mb-0">{{ field.label }}</h2>
+          <span class="badge bg-secondary text-light">Select exactly 11</span>
+        </div>
+        {% for error in field.errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
+        <div class="row g-2">
+          {% for checkbox in field %}
+            <div class="col-md-6">
+              <label class="form-check border rounded p-3 d-flex align-items-center gap-2 h-100">
+                {{ checkbox.tag }}
+                <span>{{ checkbox.choice_label }}</span>
+              </label>
+            </div>
+          {% empty %}
+            <div class="text-muted">No active players are registered for this team.</div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-emerald align-self-start px-4">
+      <i class="fa-solid fa-check me-2"></i> Assign Playing XI
+    </button>
+  </form>
+</div>
+{% endblock %}

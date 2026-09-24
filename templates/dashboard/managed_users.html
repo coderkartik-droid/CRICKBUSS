@@ -1,72 +1,205 @@
 {% extends 'base.html' %}
+{% block title %}Manage {{ role|title }}s — CRICKBUSS Admin{% endblock %}
 
-{% block title %}Manage {{ role|title }}s{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin-forms.css">
+<style>
+.pwd-row{display:flex;gap:.5rem;align-items:center;}
+.pwd-row input{flex:1;min-width:0;}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container af-page" style="max-width:1100px;">
+
+  <!-- Breadcrumb -->
+  <nav class="af-breadcrumb">
+    <a href="{% url 'dashboard:admin_dashboard' %}"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a>
+    <span class="sep">›</span>
+    <span class="current">Manage {{ role|title }}s</span>
+  </nav>
+
+  <!-- Page header -->
+  <div class="af-page-header">
     <div>
-      <h2 class="fw-bold mb-1">Manage {{ role|title }}s</h2>
-      <p class="text-muted mb-0">Create, activate, disable, reset, or remove managed accounts.</p>
+      <h1 class="af-page-title">
+        <span class="title-icon"><i class="fa-solid fa-user-shield"></i></span>
+        Manage {{ role|title }}s
+      </h1>
+      <p class="af-page-desc">Create, activate, disable, reset passwords or remove managed accounts.</p>
     </div>
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-ghost btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i>Dashboard
+    </a>
   </div>
 
-  <div class="content-card p-4 mb-4">
-    <h5 class="fw-bold mb-3">{% if is_editing %}Edit{% else %}Add{% endif %} {{ role|title }}</h5>
-    <form method="post" class="management-form">
-      {% csrf_token %}
-      <input type="hidden" name="role" value="{{ role }}">
-      {% if is_editing %}<input type="hidden" name="user_id" value="{{ form.instance.pk }}">{% endif %}
-      <section class="form-section">
-      {% for field in form %}
-        <div class="form-field">
-          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required-mark">*</span>{% endif %}</label>
-          {{ field }}
-          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+  <div class="row g-4">
+
+    <!-- ═══ LEFT: Form ═══ -->
+    <div class="col-lg-4">
+      <div class="af-card" style="position:sticky;top:80px;">
+        <div class="af-section-head">
+          <span class="af-section-icon" style="background:var(--primary);">
+            <i class="fa-solid fa-{% if is_editing %}user-pen{% else %}user-plus{% endif %}"></i>
+          </span>
+          {% if is_editing %}Edit{% else %}Add{% endif %} {{ role|title }}
         </div>
-      {% endfor %}
-      </section>
-      <div class="form-actions">
-        <button class="btn btn-emerald" type="submit">{% if is_editing %}Save{% else %}Add{% endif %} {{ role|title }}</button>
-        <a class="btn btn-ghost" href="{% url 'dashboard:managed_users' %}?role={{ role }}">Cancel</a>
-      </div>
-    </form>
-  </div>
 
-  <div class="content-card overflow-hidden">
-    <div class="table-responsive">
-      <table class="table sports-table mb-0 align-middle">
-        <thead><tr><th>Email</th><th>Name</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
-        <tbody>
-          {% for managed_user in users %}
-          <tr>
-            <td>{{ managed_user.email }}</td>
-            <td>{{ managed_user.get_full_name }}</td>
-            <td>{% if managed_user.is_active %}<span class="text-success">Active</span>{% else %}<span class="text-danger">Disabled</span>{% endif %}</td>
-            <td class="text-end">
-              <form method="post" class="d-inline">
-                {% csrf_token %}<input type="hidden" name="user_id" value="{{ managed_user.pk }}"><input type="hidden" name="action" value="toggle"><input type="hidden" name="role" value="{{ role }}">
-                <button class="btn btn-sm btn-outline-secondary" type="submit">{% if managed_user.is_active %}Disable{% else %}Enable{% endif %}</button>
-              </form>
-              <a class="btn btn-sm btn-outline-primary" href="?role={{ role }}&edit={{ managed_user.pk }}">Edit</a>
-              <form method="post" class="d-inline">
-                {% csrf_token %}<input type="hidden" name="user_id" value="{{ managed_user.pk }}"><input type="hidden" name="action" value="reset_password"><input type="hidden" name="role" value="{{ role }}">
-                <div class="reset-password-group">
-                  <input type="password" name="password" required minlength="8" placeholder="New password" class="form-control form-control-sm">
-                  <button class="btn btn-sm btn-outline-warning" type="submit">Reset</button>
-                </div>
-              </form>
-              <form method="post" class="d-inline">
-                {% csrf_token %}<input type="hidden" name="user_id" value="{{ managed_user.pk }}"><input type="hidden" name="action" value="delete"><input type="hidden" name="role" value="{{ role }}">
-                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-              </form>
-            </td>
-          </tr>
-          {% empty %}<tr><td colspan="4" class="text-center text-muted py-4">No managed accounts yet.</td></tr>{% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <form method="post" class="management-form">
+          {% csrf_token %}
+          <input type="hidden" name="role" value="{{ role }}">
+          {% if is_editing %}
+            <input type="hidden" name="user_id" value="{{ form.instance.pk }}">
+          {% endif %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger rounded-3 d-flex gap-2 mb-3" role="alert">
+            <i class="fa-solid fa-circle-exclamation flex-shrink-0 mt-1"></i>
+            <div>{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
+          </div>
+          {% endif %}
+
+          {% for field in form %}
+          <div class="af-field">
+            <label class="af-label" for="{{ field.id_for_label }}">
+              {{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<div class="af-hint">{{ field.help_text }}</div>{% endif %}
+            {% for e in field.errors %}
+              <div class="af-error"><i class="fa-solid fa-circle-exclamation"></i><span>{{ e }}</span></div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+
+          <div class="af-actions">
+            <button class="btn btn-emerald" type="submit">
+              <i class="fa-solid fa-floppy-disk me-2"></i>
+              {% if is_editing %}Save Changes{% else %}Add {{ role|title }}{% endif %}
+            </button>
+            <a class="btn btn-ghost" href="{% url 'dashboard:managed_users' %}?role={{ role }}">
+              <i class="fa-solid fa-xmark me-1"></i>Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div><!-- /col-lg-4 -->
+
+    <!-- ═══ RIGHT: Users table ═══ -->
+    <div class="col-lg-8">
+      <div class="af-table-card">
+        <div class="af-table-header">
+          <p class="af-table-title mb-0">
+            <i class="fa-solid fa-users me-1" style="color:var(--primary);"></i>
+            All {{ role|title }}s
+            <span class="badge bg-secondary rounded-pill ms-1" style="font-size:.72rem;">{{ users.count }}</span>
+          </p>
+        </div>
+
+        {% if users %}
+        <div class="table-responsive af-table">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th class="text-end" style="min-width:280px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td>
+                  <div class="fw-semibold" style="font-size:.88rem;">{{ u.email }}</div>
+                </td>
+                <td style="font-size:.88rem;">{{ u.get_full_name|default:"—" }}</td>
+                <td>
+                  {% if u.is_active %}
+                    <span class="af-badge af-badge-active"><i class="fa-solid fa-circle-check"></i>Active</span>
+                  {% else %}
+                    <span class="af-badge af-badge-inactive"><i class="fa-solid fa-circle-xmark"></i>Disabled</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-flex gap-2 justify-content-end flex-wrap align-items-center">
+                    <!-- Enable / Disable -->
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="user_id" value="{{ u.pk }}">
+                      <input type="hidden" name="action" value="toggle">
+                      <input type="hidden" name="role" value="{{ role }}">
+                      <button class="btn btn-sm btn-outline-secondary rounded-pill" type="submit"
+                              style="font-size:.76rem;padding:.25rem .7rem;">
+                        <i class="fa-solid fa-{% if u.is_active %}ban{% else %}circle-check{% endif %} me-1"></i>
+                        {% if u.is_active %}Disable{% else %}Enable{% endif %}
+                      </button>
+                    </form>
+                    <!-- Edit -->
+                    <a class="btn btn-sm btn-outline-primary rounded-pill"
+                       style="font-size:.76rem;padding:.25rem .7rem;"
+                       href="?role={{ role }}&edit={{ u.pk }}">
+                      <i class="fa-solid fa-pen me-1"></i>Edit
+                    </a>
+                    <!-- Reset password -->
+                    <form method="post" class="d-inline" onsubmit="return validateReset(this)">
+                      {% csrf_token %}
+                      <input type="hidden" name="user_id" value="{{ u.pk }}">
+                      <input type="hidden" name="action" value="reset_password">
+                      <input type="hidden" name="role" value="{{ role }}">
+                      <div class="pwd-row">
+                        <input type="password" name="password" required minlength="8"
+                               placeholder="New password"
+                               class="form-control form-control-sm"
+                               style="border-radius:8px;font-size:.78rem;min-width:110px;max-width:140px;">
+                        <button class="btn btn-sm btn-outline-warning rounded-pill flex-shrink-0"
+                                type="submit" style="font-size:.76rem;padding:.25rem .7rem;">
+                          <i class="fa-solid fa-key me-1"></i>Reset
+                        </button>
+                      </div>
+                    </form>
+                    <!-- Delete -->
+                    <form method="post" class="d-inline"
+                          onsubmit="return confirm('Permanently delete {{ u.email|escapejs }}?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="user_id" value="{{ u.pk }}">
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="role" value="{{ role }}">
+                      <button class="btn btn-sm btn-outline-danger rounded-pill" type="submit"
+                              style="font-size:.76rem;padding:.25rem .7rem;">
+                        <i class="fa-solid fa-trash me-1"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="af-empty">
+          <div class="af-empty-icon"><i class="fa-solid fa-users"></i></div>
+          <h5>No {{ role|title }}s yet</h5>
+          <p>Use the form on the left to add the first {{ role }} account.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div><!-- /col-lg-8 -->
+
+  </div><!-- /row -->
 </div>
+
+{% block extra_js %}
+<script>
+function validateReset(form) {
+  const pwd = form.querySelector('[name="password"]');
+  if (!pwd || pwd.value.length < 8) {
+    alert('Password must be at least 8 characters.');
+    return false;
+  }
+  return confirm('Reset password for this user?');
+}
+</script>
+{% endblock %}
 {% endblock %}

@@ -162,6 +162,12 @@ media/
   avatars/
     2026/
       09/
+  news/
+    images/
+      2026/
+  photos/
+    gallery/
+      2026/
   players/
     photos/
   teams/
